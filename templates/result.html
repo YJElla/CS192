@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR Results</title>
+</head>
+<body>
+
+    <h2>Processed Extracted Text</h2>
+    <pre>{{ processed_text }}</pre>
+
+    <h2>Structured Data (Processed)</h2>
+    <pre>{{ structured_data_processed | tojson(indent=4) }}</pre>
+    
+    
+    <a href="{{ url_for('teacher_dashboard') }}">Back to Dashboard</a>
+</body>
+</html>

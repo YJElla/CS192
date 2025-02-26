@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Profiles</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* General Reset */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Body Styling */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #F2F2F2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Header styling */
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header img {
+            width: 60px;
+            height: 60px;
+            margin: 0 10px;
+            vertical-align: middle;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            color: #333;
+            font-weight: bold;
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+
+        /* Table container */
+        .table-container {
+            width: 90%;
+            max-width: 600px;
+            background-color: white;
+            box-shadow: 0px 12px 24px rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        /* Table styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            font-size: 14px;
+        }
+
+        thead {
+            background-color: #003F37;
+            color: white;
+        }
+
+        th {
+            font-weight: bold;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f8f8f8;
+        }
+
+        /* Styling for the link/button */
+        .generate-link {
+            color: #003F37;
+            text-decoration: underline;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .generate-link:hover {
+            text-decoration: none;
+        }
+        .updateinfo-button {
+            border: 1px solid black;
+            padding: 10px 20px;
+            border-radius: 20px;
+            color: black;
+            background-color: transparent;
+            font-weight: bold;
+            text-decoration: none;
+            margin-top: 20px;
+        }
+        /* File Upload Section */
+        .upload-container {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 12px 24px rgba(0, 0, 0, 0.2);
+            margin-top: 20px;
+            width: 90%;
+            max-width: 600px;
+        }
+
+        .upload-container h2 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .custom-file-upload {
+            display: inline-block;
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid #003F37;
+            border-radius: 5px;
+            background-color: #003F37;
+            color: white;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        #file-upload {
+            display: none;
+        }
+
+        button {
+            background-color: #007B5E;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #005f46;
+        }
+                /* Styling for the file input container */
+        .file-input-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px; /* Space between buttons */
+            margin-top: 10px;
+        }
+
+        /* Styling for the file input */
+        input[type="file"] {
+            display: none; /* Hide default input */
+        }
+
+        .file-label {
+            background-color: #003F37;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            display: inline-block;
+            width: 200px; /* Set width */
+            text-align: center;
+        }
+
+        /* Styling for the upload button */
+        .upload-btn {
+            background-color: #003F37;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 200px; /* Match file input */
+            text-align: center;
+        }
+
+        .upload-btn:hover, .file-label:hover {
+            background-color: #005f50;
+        }
+        .file-label {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #004d40;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .file-label:hover {
+            background-color: #00695c;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- University Header -->
+    <div class="header">
+        <img src="{{ url_for('static', filename='upd_logo.png') }}" alt="University of the Philippines Logo">
+        <img src="{{ url_for('static', filename='dcs_logo.png') }}" alt="Department of Computer Science Logo">
+        <h1>University of the Philippines Diliman<br>Department of Computer Science</h1>
+    </div>
+
+    <!-- Table Container -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Student ID</th>
+                    <th>Student Name</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if students %}
+                    {% for student in students %}
+                    <tr>
+                        <td>{{ student['idStudent'] }}</td>
+                        <td>{{ student['first_name'] }} {{ student['last_name'] }}</td>
+                        <td>
+                            <a href="{{ url_for('generate_plan', student_id=student['idStudent']) }}" class="generate-link">
+                                See Extracted Information
+                            </a>
+                        </td>
+                        
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="3">No students found.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+            
+        </table>
+    </div>
+
+    <!-- File Upload Section -->
+<div class="upload-container">
+    <h2>Upload a PDF or Image for OCR</h2>
+    <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+        <div class="file-input-container">
+            <label for="file-upload" class="file-label" id="file-label">Choose File</label>
+            <input type="file" id="file-upload" name="file" accept=".pdf,.png,.jpg,.jpeg" required onchange="updateFileLabel()">
+            <button type="submit" class="upload-btn">Upload and Extract Text</button>
+       
+        </div>
+             <!-- Display Flash Messages -->
+             {% with messages = get_flashed_messages() %}
+             {% if messages %}
+                 <ul>
+                     {% for message in messages %}
+                         <li style="color: red;">{{ message }}</li>
+                     {% endfor %}
+                 </ul>
+             {% endif %}
+         {% endwith %}
+    </form>
+</div>
+
+<script>
+    function updateFileLabel() {
+        var input = document.getElementById('file-upload');
+        var label = document.getElementById('file-label');
+        label.textContent = input.files.length > 0 ? input.files[0].name : "Choose File";
+    }
+</script>
+
+    
+    
+
+    <a href="{{ url_for('logout') }}" class="updateinfo-button">Log out</a>
+
+</body>
+</html>
