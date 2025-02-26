@@ -5,7 +5,7 @@ import pytesseract
 from PIL import Image
 from ocr_pdf import extract_text_from_pdf  # Import the PDF processing function
 import mysql.connector
-
+import json
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = "C:/Users/yanni/OneDrive/Desktop/2nd Sem Year 3/CS192/CS192/uploads" #Specify folder directory
@@ -89,63 +89,6 @@ def teacherdashboard():
 @app.route('/status')
 def status():
     return render_template('status.html')
-
-@app.route('/submit_form', methods=['POST'])
-def submit_form():
-    # Update session with the latest form data
-    form_data = request.form.to_dict()
-    session.update(form_data)  # Append new data to the session
-    
-    # Check which step we are on and redirect accordingly
-    if 'first_name' in form_data and 'last_name' in form_data and 'address' in form_data:
-        return redirect(url_for('setup2'))  # Redirect to next step
-    elif 'birthdate' in form_data and 'sex' in form_data and 'phone_num' in form_data:
-        if len(form_data['phone_num']) > 12:
-            flash("phone number is too long")
-            return redirect(url_for('setup2'))
-        else:
-            return redirect(url_for('setup3'))
-    elif 'email' in form_data and 'password' in form_data and 'confirm_password' in form_data:
-        if form_data['password'] != form_data['confirm_password']:
-            flash("password does not match")
-            return redirect(url_for('setup3'))
-        else:
-            return redirect(url_for('setup4'))
-    elif 'university' in form_data and 'degree_title' in form_data and 'years_attended' in form_data and 'idStudent' in form_data:
-         # All steps completed: Insert into the database
-        
-        if all(key in session for key in ['first_name', 'last_name', 'address', 'birthdate', 'sex', 'phone_num', 'email', 'password', 'university', 'degree_title', 'years_attended', 'idStudent']):
-            connection = get_db_connection()
-            if not connection:
-                flash("Database connection failed.")
-                return redirect(url_for('setup1'))
-            try:
-       
-                cursor = connection.cursor()
-                query = """
-                    INSERT INTO student (first_name, last_name, address, birthdate, sex, phone_num, email, password, university, degree_title, years_attended, idStudent)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """
-                cursor.execute(query, (
-                    session['first_name'], session['last_name'], session['address'], 
-                    session['birthdate'], session['sex'], session['phone_num'], 
-                    session['email'], session['password'], session['university'], 
-                    session['degree_title'], session['years_attended'], session['idStudent']
-                ))
-
-                connection.commit()
-                session['user'] = session['email']  # Keep user logged in
-                flash("Signup successful!")
-                return redirect(url_for('TOR_page'))
-            except mysql.connector.IntegrityError:
-                flash("Email already exists.")
-                return redirect(url_for('setup1'))
-            finally:
-                cursor.close()
-                connection.close()
-        else:
-            flash("Incomplete data. Please complete all steps.")
-            return redirect(url_for('setup1'))  # Redirect to start or an error page
 
 @app.route('/upload_file', methods=['POST'])
 def upload_file():
@@ -231,25 +174,6 @@ def generate_plan(student_id):
 
     extracted_text = extract_text_from_pdf(pdf_path)  # Use existing function
     return render_template('result.html',  extracted_text=extracted_text)
-
-@app.route('/upload_extract', methods=['POST'])
-def upload_extract():
-    if 'file' not in request.files:
-        return redirect(request.url)
-    
-    file = request.files['file']
-    if file.filename == '':
-        return redirect(request.url)
-    
-    if file:
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
-        
-        extracted_text = extract_text_from_pdf(file_path) 
-
-        return render_template('result.html', extracted_text = extracted_text)
-
 
 @app.route('/student_info')
 def student_info():
