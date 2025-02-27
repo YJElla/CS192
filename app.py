@@ -71,14 +71,6 @@ def login_post():
         connection.close()
 
 
-
-@app.route('/TOR_page')
-def TOR_page():
-    # Check if the user is logged in
-    if 'user' not in session:
-        return redirect(url_for('login'))
-    return render_template('TOR_page.html')
-
 @app.route('/teacherdashboard')
 def teacherdashboard():
     # Check if the user is logged in
@@ -86,82 +78,84 @@ def teacherdashboard():
         return redirect(url_for('login'))
     return render_template('teacherdashboard.html')
 
-@app.route('/status')
-def status():
-    return render_template('status.html')
-
 @app.route('/upload_file', methods=['POST'])
 def upload_file():
     connection = get_db_connection()
-    cursor = connection.cursor()
 
     if 'file' not in request.files:
-        flash("No file uploaded.")
+        flash("No file uploaded.", "error")
         return redirect(request.url)
 
     file = request.files['file']
     if file.filename == '':
-        flash("No selected file.")
+        flash("No selected file.", "error")
         return redirect(request.url)
 
     try:
-        # Secure and save the file
+        cursor = connection.cursor()
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
 
-        # Extract text based on file type
         if file.filename.lower().endswith('.pdf'):
             text = extract_text_from_pdf(file_path)
         else:
             text = extract_text_from_image(file_path)
 
-        # Remove file after processing
+
         os.remove(file_path)
-        
-        # Parse extracted text as JSON
+
         result_dict = json.loads(text)
         structured_data = result_dict.get("structured_data_processed", {})
+        #print("🔹 Structured Data Processed:", json.dumps(structured_data, indent=2))
 
-        # 🔹 Insert Courses into `courses` Table
-        for page, data in structured_data.items():
-            if isinstance(data, list) and len(data) > 0:
-                data = data[0]  # Extract first dictionary from the list
+        # Ensure JSON structure is valid
+        if not isinstance(structured_data, dict):
+            print("❌ Error: structured_data is not a dictionary!")
+            flash("Invalid file format. Please try again.", "error")
+            return redirect(url_for('teacherdashboard'))
 
-            semester = data.get("Semester", "Unknown")
-            academic_year = data.get("Academic Year", "Unknown")
+        # Insert Courses
+        for page, courses in structured_data.items():  # Courses are directly under each page
+            print(f"🔹 Processing {page}: {courses}")  # Debugging
 
-            for course in data.get("Courses", []):  # Ensure "Courses" exists
+            semester = "Unknown"  # Placeholder since it's missing
+            academic_year = "Unknown"  # Placeholder since it's missing
+
+            for course in courses:
                 course_code = course.get("Course Code", "N/A")
                 description = course.get("Description", "N/A")
                 grade = course.get("Grade", "N/A")
-                units = course.get("Units", "N/A")
+                units = None if course.get("Units") in ["N/A", "Unknown", ""] else course["Units"]
 
                 course_query = """
                     INSERT INTO courses (semester, academic_year, course_code, description, grade, units)
                     VALUES (%s, %s, %s, %s, %s, %s)
                 """
+                print("🔹 Executing Query:", course_query)
+                print("🔹 With Values:", (semester, academic_year, course_code, description, grade, units))
                 cursor.execute(course_query, (semester, academic_year, course_code, description, grade, units))
 
-        # ✅ Commit changes before returning
         connection.commit()
-        cursor.close()
-        connection.close()
-
         return render_template('result.html',
                                processed_text=result_dict.get("processed_text", ""),
                                structured_data_processed=structured_data)
 
     except mysql.connector.Error as err:
         print(f"❌ MySQL Error: {err}")
-        flash("An error occurred while processing the data. Please try again.")
-        connection.rollback()  # Rollback in case of error
+        flash("An error occurred while processing the data. Please try again.", "error")
+        connection.rollback()
         return redirect(url_for('TOR_page'))
 
     finally:
-        if connection.is_connected():
-            cursor.close()
-            connection.close()
+        try:
+            if 'cursor' in locals():
+                cursor.close()
+            if 'connection' in locals() and connection.is_connected():
+                connection.close()
+        except Exception as e:
+            print(f"⚠️ Cleanup Error: {e}")
+
 
 
 @app.route('/generate_plan/<student_id>')

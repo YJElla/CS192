@@ -13,7 +13,12 @@ def extract_structured_data2(text):
     structured_data = []
 
     # Define regex patterns                
-    course_pattern = re.compile(r"([A-Za-z]+\s*\d+)\s*([\w\s,\s*&-]+?)\s*([\d.,]+ | Inc | [A-F][+-]?)\s*(\(?\d+\)?)?")  # Matches course code, description, grade, and units
+    course_pattern = re.compile(
+        r"([A-Za-z]+\s*\d+)\s*"         # Course Code (e.g., "Eng 10", "Fil 40")
+        r"([\w\s,&-]+?)\s*"             # Description (e.g., "College English", "Wika, Kultura at Lipunan")
+        r"(\d+(\.\d+)?|Inc|[A-F][+-]?)\s*"  # Grade: Prioritize numerical (e.g., "1.75", "2.5") before letter (e.g., "A")
+        r"(\(?\d+\)?)?"                 # Optional Units (e.g., "3", "(5)")
+    )
 
     for line in text.splitlines():
         line = line.strip()  # Remove leading/trailing spaces
@@ -28,7 +33,7 @@ def extract_structured_data2(text):
             course_code = course_match.group(1).strip()
             description = course_match.group(2).strip()
             grade = course_match.group(3).strip()
-            units = course_match.group(4).strip() if course_match.group(4) else "Unknown"
+            units = course_match.group(5).strip() if course_match.group(5) else "Unknown"
 
             structured_data.append({
                 "Course Code": course_code,
