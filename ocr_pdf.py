@@ -14,11 +14,13 @@ def extract_structured_data2(text):
 
     # Define regex patterns                
     course_pattern = re.compile(
-        r"([A-Za-z]+\s*\d+)\s*"         # Course Code (e.g., "Eng 10", "Fil 40")
-        r"([\w\s,&-]+?)\s*"             # Description (e.g., "College English", "Wika, Kultura at Lipunan")
-        r"(\d+(\.\d+)?|Inc|[A-F][+-]?)\s*"  # Grade: Prioritize numerical (e.g., "1.75", "2.5") before letter (e.g., "A")
-        r"(\(?\d+\)?)?"                 # Optional Units (e.g., "3", "(5)")
+        r"([A-Za-z]+\s*\d+)\s+"            # Course Code (e.g., "Eng 10", "Fil 40")
+        r"([A-Za-z\s,&-]+?)\s+"            # Description (Multiple words, e.g., "College English")
+        r"(\d+(?:\.\d{1,2})?|Inc|[A-F][+-]?)\s+"  # Grade (Numerical first, e.g., "2.25", "1.75", "A")
+        r"(\d+|\(\d+\))"                   # Units (Strictly a whole number or in parentheses, e.g., "3", "(3)")
     )
+
+
 
     for line in text.splitlines():
         line = line.strip()  # Remove leading/trailing spaces
@@ -33,7 +35,7 @@ def extract_structured_data2(text):
             course_code = course_match.group(1).strip()
             description = course_match.group(2).strip()
             grade = course_match.group(3).strip()
-            units = course_match.group(5).strip() if course_match.group(5) else "Unknown"
+            units = course_match.group(4).strip() if course_match.group(4) else "Unknown"
 
             structured_data.append({
                 "Course Code": course_code,
@@ -49,14 +51,6 @@ def extract_text_from_pdf(pdf_path):
 
     structured_data_processed = {}  # Holds structured data from pre-processed text
     processed_text_output = ""  # Pre-processed OCR text
-
-    # Define regex patterns for capturing data
-    patterns = {
-        "name": r"Name:\s*([A-Za-z\s]+)",
-        "course_degree": r"COLLEGE OF (.+)",
-        "course_data": r"([A-Za-z]+\s*\d+)\s*([\w\s,&-]+?)\s*([\d.]+)\s*(\d+)",  # Course Code, Description, Grade, Units
-        "semester": r"(1st Semester|2nd Semester|Midyear|First Semester|Second Semester)\s*,?\s*(\d{4}-\d{4})",  # Matches semester and year
-    }
 
     for page_number, page_image in enumerate(doc):
         try:
@@ -83,34 +77,3 @@ def extract_text_from_pdf(pdf_path):
         "structured_data_processed": structured_data_processed
     }, ensure_ascii=False, indent=4)
 
-
-def extract_structured_data(text, patterns):
-    """Extracts structured data from OCR text using regex patterns."""
-    page_data = {}
-
-    # Extract semester and academic year
-    semester_match = re.search(patterns["semester"], text)
-    if semester_match:
-        page_data["Semester"] = semester_match.group(1).strip()
-        page_data["Academic Year"] = semester_match.group(2).strip()
-    else:
-        page_data["Semester"] = "Not found"
-        page_data["Academic Year"] = "Not found"
-
-    # Extract course numbers, descriptions, grades, and units
-    courses = []
-    for match in re.finditer(patterns["course_data"], text):
-        course_no = match.group(1).strip()
-        description = match.group(2).strip()
-        grade = match.group(3).strip()
-        units = match.group(4).strip()
-
-        courses.append({
-            "Course Code": course_no,
-            "Description": description,
-            "Grade": grade,
-            "Units": units
-        })
-
-    page_data["Courses"] = courses  # Add courses list to page data
-    return page_data

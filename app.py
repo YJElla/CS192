@@ -51,7 +51,7 @@ def login_post():
         return redirect(url_for('login'))
     
     try:
-        cursor = connection.cursor(dictionary=True)
+        cursor = connection.cursor(buffered=True, dictionary=True)
         query = "SELECT * FROM student WHERE email = %s AND password = %s"
         cursor.execute(query, (email, password))
         user = cursor.fetchone()        #fetches result of execute query
@@ -92,7 +92,7 @@ def upload_file():
         return redirect(request.url)
 
     try:
-        cursor = connection.cursor()
+        cursor = connection.cursor(buffered=True)
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
@@ -102,39 +102,54 @@ def upload_file():
         else:
             text = extract_text_from_image(file_path)
 
-
         os.remove(file_path)
 
         result_dict = json.loads(text)
         structured_data = result_dict.get("structured_data_processed", {})
-        #print("🔹 Structured Data Processed:", json.dumps(structured_data, indent=2))
 
-        # Ensure JSON structure is valid
         if not isinstance(structured_data, dict):
-            print("❌ Error: structured_data is not a dictionary!")
             flash("Invalid file format. Please try again.", "error")
             return redirect(url_for('teacherdashboard'))
 
-        # Insert Courses
-        for page, courses in structured_data.items():  # Courses are directly under each page
-            print(f"🔹 Processing {page}: {courses}")  # Debugging
+        student_id = request.form.get("student_id")
+        student_name = request.form.get("student_name")
+        # Check if student exists
 
-            semester = "Unknown"  # Placeholder since it's missing
-            academic_year = "Unknown"  # Placeholder since it's missing
+        cursor.execute("SELECT idStudent FROM student WHERE idStudent = %s", (student_id,))
+        existing_student = cursor.fetchone()
+
+        if not existing_student:
+            student_insert_query = "INSERT INTO student (idStudent, student_name) VALUES (%s, %s)"
+            cursor.execute(student_insert_query, (student_id, student_name))
+
+        # Insert Courses & Transcripts
+        for page, courses in structured_data.items():
+            semester = "Unknown"
+            academic_year = "Unknown"
 
             for course in courses:
                 course_code = course.get("Course Code", "N/A")
                 description = course.get("Description", "N/A")
                 grade = course.get("Grade", "N/A")
-                units = None if course.get("Units") in ["N/A", "Unknown", ""] else course["Units"]
+                units = course.get("Units", "0")
 
+                # Ensure course exists in the courses table
                 course_query = """
-                    INSERT INTO courses (semester, academic_year, course_code, description, grade, units)
+                    INSERT INTO courses (course_code, description) 
+                    VALUES (%s, %s) 
+                    ON DUPLICATE KEY UPDATE description = VALUES(description)
+                """
+                cursor.execute(course_query, (course_code, description))
+
+                cursor.execute("SELECT id FROM courses WHERE course_code = %s", (course_code,))
+                course_id = cursor.fetchone()[0]
+                # Insert transcript data linking student to course
+                transcript_query = """
+                    INSERT INTO transcripts (student_id, semester, academic_year, course_id, grade, units)
                     VALUES (%s, %s, %s, %s, %s, %s)
                 """
-                print("🔹 Executing Query:", course_query)
-                print("🔹 With Values:", (semester, academic_year, course_code, description, grade, units))
-                cursor.execute(course_query, (semester, academic_year, course_code, description, grade, units))
+                cursor.execute(transcript_query, (student_id, semester, academic_year, course_id, grade, units))
+
 
         connection.commit()
         return render_template('result.html',
@@ -142,10 +157,10 @@ def upload_file():
                                structured_data_processed=structured_data)
 
     except mysql.connector.Error as err:
-        print(f"❌ MySQL Error: {err}")
+        print(f"❌ 1 MySQL Error: {err}")
         flash("An error occurred while processing the data. Please try again.", "error")
         connection.rollback()
-        return redirect(url_for('TOR_page'))
+        return redirect(url_for('teacherdashboard'))
 
     finally:
         try:
@@ -158,39 +173,41 @@ def upload_file():
 
 
 
-@app.route('/generate_plan/<student_id>')
-def generate_plan(student_id):
-    pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{student_id}.pdf")  # Ensure correct folder
+@app.route('/view_courses/<student_id>')
+def view_courses(student_id):
+    connection = get_db_connection()
 
-    if not os.path.exists(pdf_path):
-        flash("TOR not found for this student.")
+    try:
+        cursor = connection.cursor(buffered=True, dictionary=True)
+        query = """
+            SELECT t.id, t.semester, t.academic_year, 
+                   c.course_code, c.description, t.grade, t.units
+            FROM transcripts t
+            JOIN courses c ON t.course_id = c.id
+            WHERE t.student_id = %s;
+        """
+        cursor.execute(query, (student_id,))
+        courses = cursor.fetchall()
+    
+        query = "SELECT student_name FROM student WHERE idStudent = %s"
+        cursor.execute(query, (student_id,))
+        student_name = cursor.fetchone()  # Fetch all students
+
+
+        if not courses:
+            flash("No courses found for this student.", "error")
+            return redirect(url_for('teacher_dashboard'))  
+
+        return render_template('view_courses.html', student_id=student_id,student_name=student_name , courses=courses)
+
+    except mysql.connector.Error as err:
+        print(f"❌ 2 MySQL Error: {err}")
+        flash("Error fetching data from database.", "error")
         return redirect(url_for('teacher_dashboard'))
 
-    extracted_text = extract_text_from_pdf(pdf_path)  # Use existing function
-    return render_template('result.html',  extracted_text=extracted_text)
-
-@app.route('/student_info')
-def student_info():
-   # Fetch the student's information from the database or session
-    user = session.get('user')  # Assuming the user's ID is stored in the session
-    print(user)
-    if not user:
-        flash("You need to log in to view your information.")
-        return redirect(url_for('login'))
-
-    connection = get_db_connection()
-    cursor = connection.cursor()
-
-    # Query the database for student information
-    cursor.execute("SELECT * FROM student WHERE email = %s", (user,))
-    student_data = cursor.fetchone()
-
-    if not student_data:
-        flash("Student information not found.")
-        return redirect(url_for(''))  # Redirect to the setup flow if info is missing
-
-    # Pass the retrieved data to the template
-    return render_template('student_info.html', student_info=student_data)
+    finally:
+        cursor.close()
+        connection.close()
 
 @app.route('/teacher_dashboard')
 def teacher_dashboard():
@@ -204,11 +221,10 @@ def teacher_dashboard():
         flash("Database connection failed.")
         return redirect(url_for('login'))
 
-    cursor = connection.cursor(dictionary=True)  # Use dictionary cursor
-    query = "SELECT idStudent, first_name, last_name FROM student"
+    cursor = connection.cursor(buffered=True, dictionary=True)  # Use dictionary cursor
+    query = "SELECT idStudent, student_name FROM student"
     cursor.execute(query)
     students = cursor.fetchall()  # Fetch all students
-
     cursor.close()
     connection.close()
 

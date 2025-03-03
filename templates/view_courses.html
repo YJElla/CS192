@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Courses - {{ student_id }}</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <a href="{{ url_for('teacher_dashboard') }}">Back to Dashboard</a>
+
+    <h2>Transcript for Student ID: {{ student_id }}</h2>
+    <h2>Transcript for Student Name: {{ student_name.student_name }}</h2>
+    {% if courses %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Course Code</th>
+                    <th>Description</th>
+                    <th>Grade</th>
+                    <th>Units</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for course in courses %}
+                <tr>
+                    <td>{{ course.id }}</td>
+                    <td>{{ course.course_code }}</td>
+                    <td>{{ course.description }}</td>
+                    <td>{{ course.grade }}</td>
+                    <td>{{ course.units }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No courses found for this student.</p>
+    {% endif %}
+
+</body>
+</html>
