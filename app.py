@@ -8,7 +8,7 @@ import mysql.connector
 import json
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = "C:/Users/yanni/OneDrive/Desktop/2nd Sem Year 3/CS192/CS192/uploads"#Specify folder directory
+app.config['UPLOAD_FOLDER'] = "C:/Users/Daniel Yap/Desktop/Python/CS192/Upload Directory"#Specify folder directory
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Limit file size to 16 MB
 
 app.secret_key = "my_secret_key" 
@@ -18,7 +18,7 @@ def get_db_connection():
         connection = mysql.connector.connect(
             host="localhost",  # Replace with  DB host
             user="root",  # Replace with MySQL username
-            password="password",  # Replace with your MySQL password
+            password="Westbridge19",  # Replace with your MySQL password
             database="cs191"
         )
         return connection
@@ -152,9 +152,9 @@ def upload_file():
 
 
         connection.commit()
-        return render_template('result.html',
-                               processed_text=result_dict.get("processed_text", ""),
-                               structured_data_processed=structured_data)
+        flash(f"Student {student_name} (ID: {student_id}) added successfully!", "success")
+        return redirect(url_for('teacher_dashboard'))
+
 
     except mysql.connector.Error as err:
         print(f"❌ 1 MySQL Error: {err}")
@@ -274,6 +274,35 @@ def add_prereq():
     
     flash("Prerequisite added successfully!", "success")
     return redirect(url_for('manage_prereqs'))  # Redirect to admin page
+
+@app.route('/remove_student/<student_id>', methods=['POST'])
+def remove_student(student_id):
+    connection = get_db_connection()
+    if not connection:
+        flash("Database connection failed.", "error")
+        return redirect(url_for('teacher_dashboard'))
+
+    try:
+        cursor = connection.cursor()
+
+        # Delete only the student from the student table
+        cursor.execute("DELETE FROM transcripts WHERE student_id = %s", (student_id,))
+        cursor.execute("DELETE FROM student WHERE idStudent = %s", (student_id,))
+        
+        connection.commit()
+        flash("Student removed successfully.", "success")
+    
+    except mysql.connector.Error as err:
+        print(f"❌ MySQL Error: {err}")
+        flash("Error deleting student. Please try again.", "error")
+        connection.rollback()
+    
+    finally:
+        cursor.close()
+        connection.close()
+
+    return redirect(url_for('teacher_dashboard'))
+
     
 @app.route('/logout')
 def logout():
