@@ -204,6 +204,30 @@
             background-color: #00695c;
         }
 
+        .form-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 10px; /* Adjust spacing between inputs */
+            margin-top: 20px; /* Space from upload buttons */
+            width: 100%;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .delete-btn {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .delete-btn:hover {
+            background-color: darkred;
+        }
+
+
     </style>
 </head>
 <body>
@@ -223,6 +247,7 @@
                     <th>Student ID</th>
                     <th>Student Name</th>
                     <th>Action</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -235,6 +260,12 @@
                             <a href="{{ url_for('view_courses', student_id=student['idStudent']) }}" class="generate-link">
                                 See Extracted Information
                             </a>
+                        </td>
+                        <td>
+                            <form action="{{ url_for('remove_student', student_id=student.idStudent) }}" method="POST" 
+                                onsubmit="return confirm('Are you sure you want to remove this student?');">
+                                <button type="submit" class="delete-btn">Remove</button>
+                            </form>
                         </td>
                         
                     </tr>
@@ -268,11 +299,13 @@
                  </ul>
              {% endif %}
          {% endwith %}
-         <label for="student_id">Application ID:</label>
-         <input type="text" name="student_id" required pattern="\d+" title="Only digits allowed" required>
-     
-         <label for="student_name">Student Name:</label>
-         <input type="text" name="student_name" required>
+         <div class="form-fields">
+            <label for="student_id">Application ID:</label>
+            <input type="text" name="student_id" required pattern="\d+" title="Only digits allowed">
+            
+            <label for="student_name">Student Name:</label>
+            <input type="text" name="student_name" required>
+        </div>
     </form>
 </div>
 
@@ -283,9 +316,6 @@
         label.textContent = input.files.length > 0 ? input.files[0].name : "Choose File";
     }
 </script>
-
-    
-    
 
     <a href="{{ url_for('logout') }}" class="updateinfo-button">Log out</a>
 
