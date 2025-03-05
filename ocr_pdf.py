@@ -34,7 +34,7 @@ def extract_structured_data2(text):
         if course_match:
             course_code = course_match.group(1).strip()
             description = course_match.group(2).strip()
-            grade = course_match.group(3).strip()
+            grade = course_match.group(3).strip() if course_match.group(3) else "N/A"
             units = course_match.group(4).strip() if course_match.group(4) else "Unknown"
 
             structured_data.append({
