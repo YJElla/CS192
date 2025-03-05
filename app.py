@@ -8,7 +8,7 @@ import mysql.connector
 import json
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = "C:/Users/Daniel Yap/Desktop/Python/CS192/Upload Directory"#Specify folder directory
+app.config['UPLOAD_FOLDER'] = "C:/Users/yanni/OneDrive/Desktop/2nd Sem Year 3/CS192/CS192/uploads"#Specify folder directory
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Limit file size to 16 MB
 
 app.secret_key = "my_secret_key" 
@@ -18,7 +18,7 @@ def get_db_connection():
         connection = mysql.connector.connect(
             host="localhost",  # Replace with  DB host
             user="root",  # Replace with MySQL username
-            password="Westbridge19",  # Replace with your MySQL password
+            password="password",  # Replace with your MySQL password
             database="cs191"
         )
         return connection
@@ -256,7 +256,25 @@ def ms_page():
 def bioinformatics_page():
     return render_template('bioinformatics.html')
 
+@app.route('/add_prereq', methods=['POST'])
+def add_prereq():
+    program = request.form['program']
+    course_code = request.form['course_code']
+    description = request.form['description']
 
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    
+    query = "INSERT INTO prereqs (program, course_code, description) VALUES (%s, %s, %s)"
+    cursor.execute(query, (program, course_code, description))
+    
+    connection.commit()
+    cursor.close()
+    connection.close()
+    
+    flash("Prerequisite added successfully!", "success")
+    return redirect(url_for('manage_prereqs'))  # Redirect to admin page
+    
 @app.route('/logout')
 def logout():
     session.pop('user', None)

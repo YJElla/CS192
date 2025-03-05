@@ -8,6 +8,16 @@ import logging
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
+def fix_grade(grade):
+    """Fix grades that were extracted incorrectly."""
+    grade = grade.replace(",", ".")  # Convert comma to dot for decimal consistency
+    
+    if re.fullmatch(r"\d{3}", grade):  # E.g., "175" → "1.75"
+        return f"{grade[0]}.{grade[1:]}"
+    elif re.fullmatch(r"\d{2}", grade):  # E.g., "15" → "1.5"
+        return f"{grade[0]}.{grade[1]}"
+    
+    return grade  # Return unchanged if it's already valid
 
 def extract_structured_data2(text):
     structured_data = []
@@ -16,7 +26,7 @@ def extract_structured_data2(text):
     course_pattern = re.compile(
         r"([A-Za-z]+\s*\d+)\s+"            # Course Code (e.g., "Eng 10", "Fil 40")
         r"([A-Za-z\s,&-]+?)\s+"            # Description (Multiple words, e.g., "College English")
-        r"(\d+(?:\.\d{1,2})?|Inc|[A-F][+-]?)\s+"  # Grade (Numerical first, e.g., "2.25", "1.75", "A")
+        r"(\d+(?:[.,]\d{1,2})?|Inc|[A-F][+-]?)\s*[|]?\s*"  # Grade (Numerical first, e.g., "2.25", "1.75", "A")
         r"(\d+|\(\d+\))"                   # Units (Strictly a whole number or in parentheses, e.g., "3", "(3)")
     )
 
@@ -34,7 +44,7 @@ def extract_structured_data2(text):
         if course_match:
             course_code = course_match.group(1).strip()
             description = course_match.group(2).strip()
-            grade = course_match.group(3).strip() if course_match.group(3) else "N/A"
+            grade = fix_grade(course_match.group(3).strip()) if course_match.group(3) else "N/A"
             units = course_match.group(4).strip() if course_match.group(4) else "Unknown"
 
             structured_data.append({

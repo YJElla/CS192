@@ -2,7 +2,7 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `transcripts`;
 DROP TABLE IF EXISTS `courses`;
-
+DROP TABLE IF EXISTS `prereqs`;
 DROP TABLE IF EXISTS `student`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -27,13 +27,6 @@ CREATE TABLE `student` (
 -- Dumping data for table `student`
 --
 
-LOCK TABLES `student` WRITE;
-/*!40000 ALTER TABLE `student` DISABLE KEYS */;
-INSERT INTO `student` VALUES (202202031,'Ella','ycella@up.edu.ph',
-'password','Cavite','9053025857','Male','06192003','UP Diliman','2022-2026','BS Computer Science');
-/*!40000 ALTER TABLE `student` ENABLE KEYS */;
-UNLOCK TABLES;
-
 DROP TABLE IF EXISTS courses;
 CREATE TABLE courses (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -54,4 +47,19 @@ CREATE TABLE transcripts (
     FOREIGN KEY (course_id) REFERENCES courses(id)
 );
 
--- Dump completed on 2024-11-14 21:29:16
+CREATE TABLE prereqs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    program VARCHAR(50) NOT NULL,  
+    core_course_code VARCHAR(20) NOT NULL,
+    prereq_course_code VARCHAR(20) NOT NULL,  
+    description VARCHAR(1000) NOT NULL  
+);
+
+INSERT INTO prereqs (program, core_course_code, prereq_course_code, description) VALUES
+('MS', 'CS204' , 'CS133', 'Alphabet, words, languages and algorithmic problems, finite automata and hierarchy of languages, Turing machines, tractable and intractable problems, uncomputable functions, the halting problem'),
+('MS', 'CS210', 'CS135' , 'Algorithm analysis: asymptotic analysis, time and space tradeoffs, recurrence relations. Greedy, divide and conquer, heuristics and other algorithm design strategies. Fundamental computing algorithms for sorting, selection, trees and graphs. Intractability and approximation'),
+('MS', 'CS220', 'CS150' , 'Survey of Programming Languages: History and overview of programming languages, Programming paradigms: imperative, functional, object-oriented, logic, Type systems, Declaration and modularity, Introduction to syntax and semantics'),
+('MS', 'CS250', 'CS140' , 'Operating system concepts; virtualization and multiprocessing, issues and considerations in designing and implementing common features of operating systems; virtual machines and hypervisors; introduction to real-time operating systems, and operating systems for embedded systems'),
+('MS', 'CS260', 'CS192' , 'Software Implementation and Maintenance, Integration Strategies, and Security Issues'),
+('MS', 'CS270', 'CS165' , 'Relational database concepts: Entity Relation modeling, relational model, relational algebra, relational database design and normalization, structured query language, query optimization, File management, Storage and Indexing, Transaction Management, Data warehousing. Non-relational/modern database systems'),
+('MS', 'Math Background', 'Math Background' , 'Math, Statistics, Algebra, Probability, Statistics, Trigonometry, Calculus, Numerical Methods');

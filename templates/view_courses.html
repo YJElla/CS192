@@ -183,7 +183,7 @@
             <tbody>
                 {% for course in courses %}
                 <tr>
-                    <td>{{ course.id }}</td>
+                    <td>{{ loop.index }}</td>  <!-- This automatically numbers 1-N -->
                     <td>{{ course.course_code }}</td>
                     <td>{{ course.description }}</td>
                     <td>{{ course.grade }}</td>
