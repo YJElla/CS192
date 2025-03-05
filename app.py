@@ -8,7 +8,7 @@ import mysql.connector
 import json
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = "C:/Users/yanni/OneDrive/Desktop/2nd Sem Year 3/CS192/CS192/uploads" #Specify folder directory
+app.config['UPLOAD_FOLDER'] = "C:/Users/Daniel Yap/Desktop/Python/CS192/Upload Directory"#Specify folder directory
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Limit file size to 16 MB
 
 app.secret_key = "my_secret_key" 
@@ -18,7 +18,7 @@ def get_db_connection():
         connection = mysql.connector.connect(
             host="localhost",  # Replace with  DB host
             user="root",  # Replace with MySQL username
-            password="password",  # Replace with your MySQL password
+            password="Westbridge19",  # Replace with your MySQL password
             database="cs191"
         )
         return connection
@@ -229,6 +229,33 @@ def teacher_dashboard():
     connection.close()
 
     return render_template('teacherdashboard.html', students=students or [])
+
+@app.route('/redirect_program', methods=['POST'])
+def redirect_program():
+    program = request.form.get('program')
+
+    if program == 'phd':
+        return redirect(url_for('phd_page'))
+    elif program == 'ms':
+        return redirect(url_for('ms_page'))
+    elif program == 'bioinformatics':
+        return redirect(url_for('bioinformatics_page'))
+    else:
+        flash("Invalid selection. Please choose a valid program.")
+        return redirect(url_for('teacher_dashboard'))
+
+@app.route('/phd')
+def phd_page():
+    return render_template('phd.html')
+
+@app.route('/ms')
+def ms_page():
+    return render_template('ms.html')
+
+@app.route('/bioinformatics')
+def bioinformatics_page():
+    return render_template('bioinformatics.html')
+
 
 @app.route('/logout')
 def logout():
