@@ -109,6 +109,7 @@
             margin-top: 20px;
             width: 90%;
             max-width: 600px;
+            margin-bottom: 50px;
         }
 
         .upload-container h2 {
@@ -168,6 +169,19 @@
     <h2>Transcript for Student ID: {{ student_id }}</h2>
     <h2>Transcript for Student Name: {{ student_name.student_name }}</h2>
 
+    <div class="upload-container">
+        <h2>Select Relevant Courses:</h2>
+        <form action="{{ url_for('redirect_program') }}" method="POST">
+            <select name="program" required>
+                <option value="" disabled selected>Select a program</option>
+                <option value="phd">PhD</option>
+                <option value="ms">MS</option>
+                <option value="bioinformatics">Bioinformatics</option>
+            </select>
+            <button type="submit">Go</button>
+        </form>
+    </div>
+
     <div class="table-container">
     {% if courses %}
         <table>
@@ -198,18 +212,6 @@
 </div>
     <a href="{{ url_for('teacher_dashboard') }}" class = "updateinfo-button">Back to Dashboard</a>
     <!-- Program Selection Dropdown -->
-<div class="upload-container">
-    <h2>Select Relevant Courses:</h2>
-    <form action="{{ url_for('redirect_program') }}" method="POST">
-        <select name="program" required>
-            <option value="" disabled selected>Select a program</option>
-            <option value="phd">PhD</option>
-            <option value="ms">MS</option>
-            <option value="bioinformatics">Bioinformatics</option>
-        </select>
-        <button type="submit">Go</button>
-    </form>
-</div>
 
 </body>
 </html>
