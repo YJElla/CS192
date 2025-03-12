@@ -49,17 +49,17 @@ CREATE TABLE transcripts (
 
 CREATE TABLE prereqs (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    program VARCHAR(50) NOT NULL,  
+    program ENUM('MS', 'PhD', 'Bioinformatics') NOT NULL,  
     core_course_code VARCHAR(20) NOT NULL,
     prereq_course_code VARCHAR(20) NOT NULL,  
     description VARCHAR(1000) NOT NULL  
 );
 
 INSERT INTO prereqs (program, core_course_code, prereq_course_code, description) VALUES
-('MS', 'CS204' , 'CS133', 'Alphabet, words, languages and algorithmic problems, finite automata and hierarchy of languages, Turing machines, tractable and intractable problems, uncomputable functions, the halting problem'),
-('MS', 'CS210', 'CS135' , 'Algorithm analysis: asymptotic analysis, time and space tradeoffs, recurrence relations. Greedy, divide and conquer, heuristics and other algorithm design strategies. Fundamental computing algorithms for sorting, selection, trees and graphs. Intractability and approximation'),
-('MS', 'CS220', 'CS150' , 'Survey of Programming Languages: History and overview of programming languages, Programming paradigms: imperative, functional, object-oriented, logic, Type systems, Declaration and modularity, Introduction to syntax and semantics'),
-('MS', 'CS250', 'CS140' , 'Operating system concepts; virtualization and multiprocessing, issues and considerations in designing and implementing common features of operating systems; virtual machines and hypervisors; introduction to real-time operating systems, and operating systems for embedded systems'),
-('MS', 'CS260', 'CS192' , 'Software Implementation and Maintenance, Integration Strategies, and Security Issues'),
-('MS', 'CS270', 'CS165' , 'Relational database concepts: Entity Relation modeling, relational model, relational algebra, relational database design and normalization, structured query language, query optimization, File management, Storage and Indexing, Transaction Management, Data warehousing. Non-relational/modern database systems'),
-('MS', 'Math Background', 'Math Background' , 'Math, Statistics, Algebra, Probability, Statistics, Trigonometry, Calculus, Numerical Methods');
+('ms, phd', 'CS204' , 'CS133', 'Alphabet, words, languages and algorithmic problems, finite automata and hierarchy of languages, Turing machines, tractable and intractable problems, uncomputable functions, the halting problem'),
+('ms, phd', 'CS210', 'CS135' , 'Algorithm analysis: asymptotic analysis, time and space tradeoffs, recurrence relations. Greedy, divide and conquer, heuristics and other algorithm design strategies. Fundamental computing algorithms for sorting, selection, trees and graphs. Intractability and approximation'),
+('ms, phd', 'CS220', 'CS150' , 'Survey of Programming Languages: History and overview of programming languages, Programming paradigms: imperative, functional, object-oriented, logic, Type systems, Declaration and modularity, Introduction to syntax and semantics'),
+('ms, phd', 'CS250', 'CS140' , 'Operating system concepts; virtualization and multiprocessing, issues and considerations in designing and implementing common features of operating systems; virtual machines and hypervisors; introduction to real-time operating systems, and operating systems for embedded systems'),
+('ms, phd', 'CS260', 'CS192' , 'Software Implementation and Maintenance, Integration Strategies, and Security Issues'),
+('ms, phd', 'CS270', 'CS165' , 'Relational database concepts: Entity Relation modeling, relational model, relational algebra, relational database design and normalization, structured query language, query optimization, File management, Storage and Indexing, Transaction Management, Data warehousing. Non-relational/modern database systems'),
+('ms, phd', 'Math Background', 'Math Background' , 'Math, Statistics, Algebra, Probability, Statistics, Trigonometry, Calculus, Numerical Methods');

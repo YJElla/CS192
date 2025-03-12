@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Matched Courses</title>
+</head>
+<body>
+    <h1>Matched Courses for Program Prerequisites</h1>
+    
+    {% for prereq in results %}
+        <h2>Prerequisite: {{ prereq.prereq_course_code }} - {{ prereq.prereq_description }}</h2>
+        {% if prereq.matched_courses %}
+            <ul>
+                {% for match in prereq.matched_courses %}
+                    <li>
+                        {{ match.taken_course_code }} - {{ match.taken_description }} 
+                        (Similarity: {{ match.similarity_score * 100 }}%)
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No matching courses found.</p>
+        {% endif %}
+    {% endfor %}
+</body>
+</html>

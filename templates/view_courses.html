@@ -172,6 +172,7 @@
     <div class="upload-container">
         <h2>Select Relevant Courses:</h2>
         <form action="{{ url_for('redirect_program') }}" method="POST">
+            <input type="hidden" name="student_id" value="{{ student_id }}">
             <select name="program" required>
                 <option value="" disabled selected>Select a program</option>
                 <option value="phd">PhD</option>
