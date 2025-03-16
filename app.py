@@ -10,7 +10,7 @@ from nlp import compute_similarity
 from db import get_student_courses, get_prereqs_for_program 
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = "C:/Users/yanni/OneDrive/Desktop/2nd Sem Year 3/CS192/CS192/uploads"#Specify folder directory
+app.config['UPLOAD_FOLDER'] = "C:/Users/Daniel Yap/Desktop/Python/CS192/Upload Directory" #Specify folder directory
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Limit file size to 16 MB
 
 app.secret_key = "my_secret_key" 
@@ -20,7 +20,7 @@ def get_db_connection():
         connection = mysql.connector.connect(
             host="localhost",  # Replace with  DB host
             user="root",  # Replace with MySQL username
-            password="password",  # Replace with your MySQL password
+            password="Westbridge19",  # Replace with your MySQL password
             database="cs191"
         )
         return connection
@@ -232,24 +232,30 @@ def teacher_dashboard():
 
     return render_template('teacherdashboard.html', students=students or [])
 
+@app.route('/matched_courses')
+def matched_courses():
+    # Your function logic
+    return render_template('matched_courses.html')
+
+
 @app.route('/redirect_program', methods=['POST'])
 def redirect_program():
     program = request.form.get('program')
     student_id = request.form.get('student_id')  # Get student ID from form input
     print("STUDENT ID:", student_id)
-    if program == 'phd':
-        return redirect(url_for('phd_page'))
+    if program == 'phd':  
+        return redirect(url_for('compare_courses', program= program, student_id=student_id))
     elif program == 'ms':
         return redirect(url_for('compare_courses', program = program, student_id = student_id))
     elif program == 'bioinformatics':
-        return redirect(url_for('bioinformatics_page'))
+        return redirect(url_for('compare_courses', program = program, student_id = student_id))
     else:
         flash("Invalid selection. Please choose a valid program.")
         return redirect(url_for('teacher_dashboard'))
 
 @app.route('/phd')
-def phd_page():
-    return render_template('phd.html')
+def phd():
+    return redirect(url_for('compare_courses', program='PhD'))
 
 @app.route('/ms')
 def ms_page():
