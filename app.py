@@ -10,7 +10,7 @@ from nlp import compute_similarity
 from db import get_student_courses, get_prereqs_for_program 
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = "C:/Users/Daniel Yap/Desktop/Python/CS192/Upload Directory" #Specify folder directory
+app.config['UPLOAD_FOLDER'] = "C:/Users/yanni/OneDrive/Desktop/2nd Sem Year 3/CS192/CS192/uploads" #Specify folder directory
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Limit file size to 16 MB
 
 app.secret_key = "my_secret_key" 
