@@ -19,17 +19,16 @@ def fix_grade(grade):
     
     return grade  # Return unchanged if it's already valid
 
-def extract_structured_data2(text):
+def extract_structured_data(text):
     structured_data = []
 
     # Define regex patterns                
     course_pattern = re.compile(
-        r"([A-Za-z]+\s*\d+)\s+"            # Course Code (e.g., "Eng 10", "Fil 40")
-        r"([A-Za-z\s,&-]+?)\s+"            # Description (Multiple words, e.g., "College English")
-        r"(\d+(?:[.,]\d{1,2})?|Inc|[A-F][+-]?)\s*[|]?\s*"  # Grade (Numerical first, e.g., "2.25", "1.75", "A")
-        r"(\d+|\(\d+\))"                   # Units (Strictly a whole number or in parentheses, e.g., "3", "(3)")
+        r"([A-Za-z]+(?:\s[A-Za-z]+)?\s*\d+(?:\.\d+)?)\s+"          # Course Code (e.g., "Eng 10", "Fil 40")
+        r"((?:\b(?:[A-Za-z&-,]{2,}|\b[A-Za-z]\b)\s*)+?)\s+"            # Description (Multiple words, e.g., "College English")
+        r"(\d+(?:[.,]\d{1,2})?|Inc|[A-F][+-]?)?\s*[|]?\s*"  # Grade (Numerical first, e.g., "2.25", "1.75", "A")
+        r"(\d+|\(\d+\))?"                   # Units (Strictly a whole number or in parentheses, e.g., "3", "(3)")
     )
-
 
 
     for line in text.splitlines():
@@ -37,8 +36,9 @@ def extract_structured_data2(text):
 
         # Remove random unwanted characters (keep alphanumeric, spaces, and essential symbols)
         line = re.sub(r"[^A-Za-z0-9\s.,()-]", " ", line)  # Keeps letters, numbers, spaces, periods, commas, parentheses
+        line = re.sub(r'\bll\b', '11', line)  # Fix 'll' → '11'
+        line = re.sub(r'\bl\b', '1', line)    # Fix 'l' → '1'
         line = re.sub(r"\s+", " ", line).strip()  # Normalize multiple space
-        
         # Match course details
         course_match = course_pattern.match(line)
         if course_match:
@@ -75,7 +75,7 @@ def extract_text_from_pdf(pdf_path):
             processed_text_output += f"\n\n=== Page {page_number + 1} ===\n{processed_text}"
 
             # Store structured data for both raw and pre-processed text
-            structured_data_processed[f"Page_{page_number + 1}"] = extract_structured_data2(processed_text)
+            structured_data_processed[f"Page_{page_number + 1}"] = extract_structured_data(processed_text)
 
         except Exception as e:
             logging.error(f"Error processing page {page_number + 1}: {e}")

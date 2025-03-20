@@ -22,7 +22,7 @@ def compute_similarity(taken_courses, prereqs):
         matched_courses = []
         for j, taken_course in enumerate(taken_courses):
             similarity_score = similarity_matrix[i, j]
-            if similarity_score > 0.3:  # Threshold for relevance
+            if similarity_score > 0.25:  # Threshold for relevance
                 matched_courses.append({
                     "taken_course_code": taken_course["course_code"],
                     "taken_description": taken_course["description"],

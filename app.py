@@ -155,14 +155,17 @@ def upload_file():
 
         connection.commit()
         flash(f"Student {student_name} (ID: {student_id}) added successfully!", "success")
-        return redirect(url_for('teacher_dashboard'))
+        #return redirect(url_for('teacher_dashboard'))
+        return render_template('result.html',
+                        processed_text=result_dict.get("processed_text", ""),
+                        structured_data_processed=structured_data)
 
 
     except mysql.connector.Error as err:
         print(f"❌ 1 MySQL Error: {err}")
         flash("An error occurred while processing the data. Please try again.", "error")
         connection.rollback()
-        return redirect(url_for('teacherdashboard'))
+        return redirect(url_for('teacher_dashboard'))
 
     finally:
         try:
@@ -172,8 +175,6 @@ def upload_file():
                 connection.close()
         except Exception as e:
             print(f"⚠️ Cleanup Error: {e}")
-
-
 
 @app.route('/view_courses/<student_id>')
 def view_courses(student_id):
@@ -319,7 +320,7 @@ def compare_courses():
     taken_courses = get_student_courses(student_id)
     prereqs = get_prereqs_for_program(program)
     matched_results = compute_similarity(taken_courses, prereqs)
-    return render_template("matched_courses.html", results=matched_results)
+    return render_template("matched_courses.html", results = matched_results, student=student_id)
 
 @app.route('/logout')
 def logout():
