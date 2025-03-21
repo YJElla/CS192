@@ -248,6 +248,7 @@
                     <th>Student Name</th>
                     <th>Action</th>
                     <th></th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -262,12 +263,16 @@
                             </a>
                         </td>
                         <td>
+                            <a href="{{ url_for('result_page', student_id=student['idStudent']) }}" class="generate-link">
+                                See Raw Text
+                            </a>
+                        </td>
+                        <td>
                             <form action="{{ url_for('remove_student', student_id=student.idStudent) }}" method="POST" 
                                 onsubmit="return confirm('Are you sure you want to remove this student?');">
                                 <button type="submit" class="delete-btn">Remove</button>
                             </form>
                         </td>
-                        
                     </tr>
                     {% endfor %}
                 {% else %}
