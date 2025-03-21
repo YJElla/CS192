@@ -10,7 +10,7 @@ from nlp import compute_similarity
 from db import get_student_courses, get_prereqs_for_program 
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = "C:/Users/yanni/OneDrive/Desktop/2nd Sem Year 3/CS192/CS192/uploads" #Specify folder directory
+app.config['UPLOAD_FOLDER'] = "C:/Users/Daniel Yap/Desktop/Python/CS192Final/Upload Directory" #Specify folder directory
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Limit file size to 16 MB
 
 app.secret_key = "my_secret_key" 
@@ -20,7 +20,7 @@ def get_db_connection():
         connection = mysql.connector.connect(
             host="localhost",  # Replace with  DB host
             user="root",  # Replace with MySQL username
-            password="password",  # Replace with your MySQL password
+            password="Westbridge19",  # Replace with your MySQL password
             database="cs191"
         )
         return connection
@@ -104,8 +104,6 @@ def upload_file():
         else:
             text = extract_text_from_image(file_path)
 
-        os.remove(file_path)
-
         result_dict = json.loads(text)
         structured_data = result_dict.get("structured_data_processed", {})
 
@@ -155,11 +153,7 @@ def upload_file():
 
         connection.commit()
         flash(f"Student {student_name} (ID: {student_id}) added successfully!", "success")
-        #return redirect(url_for('teacher_dashboard'))
-        return render_template('result.html',
-                        processed_text=result_dict.get("processed_text", ""),
-                        structured_data_processed=structured_data)
-
+        return redirect(url_for('teacher_dashboard'))
 
     except mysql.connector.Error as err:
         print(f"❌ 1 MySQL Error: {err}")
@@ -175,6 +169,31 @@ def upload_file():
                 connection.close()
         except Exception as e:
             print(f"⚠️ Cleanup Error: {e}")
+            
+@app.route('/result_page/<student_id>')
+def result_page(student_id):
+    pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{student_id}.pdf")  # Ensure correct folder
+
+    if not os.path.exists(pdf_path):
+        flash("TOR not found for this student.")
+        return redirect(url_for('teacher_dashboard'))
+
+    extracted_text = extract_text_from_pdf(pdf_path)  # Extract text from PDF
+
+    # 🔹 Ensure JSON parsing is safe
+    try:
+        result_dict = json.loads(extracted_text)  # Attempt JSON parsing
+        structured_data_processed = result_dict.get("structured_data_processed", {})  # ✅ Fix variable name
+    except (json.JSONDecodeError, TypeError):
+        structured_data_processed = {}  # Set as empty dictionary instead of None
+
+    return render_template(
+        'result.html',
+        student_id=student_id,
+        processed_text=extracted_text,  # Ensure `processed_text` is passed
+        structured_data_processed=structured_data_processed  # ✅ Now correctly passed
+    )
+
 
 @app.route('/view_courses/<student_id>')
 def view_courses(student_id):
