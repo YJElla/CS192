@@ -10,7 +10,7 @@ def compute_similarity(taken_courses, prereqs):
         return []
 
     # Vectorize the text descriptions
-    vectorizer = TfidfVectorizer(stop_words='english').fit(taken_descriptions + prereq_descriptions)
+    vectorizer = TfidfVectorizer().fit(taken_descriptions + prereq_descriptions)
     taken_vectors = vectorizer.transform(taken_descriptions)
     prereq_vectors = vectorizer.transform(prereq_descriptions)
 
@@ -26,6 +26,7 @@ def compute_similarity(taken_courses, prereqs):
                 matched_courses.append({
                     "taken_course_code": taken_course["course_code"],
                     "taken_description": taken_course["description"],
+                    "grade": taken_course["grade"],
                     "similarity_score": round(similarity_score, 2)
                 })
         
