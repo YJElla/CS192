@@ -81,6 +81,38 @@
             margin-top: 20px;
         }
 
+        .grade-box {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            color: white;
+            margin-left: 10px;
+        }
+
+        .grade-item {
+            display: flex;
+            justify-content: space-between;  /* Pushes grade box to right */
+            align-items: center;  /* Aligns text vertically */
+            width: 100%;  /* Ensures full-width */
+        }
+
+        .green {
+            background-color: #4CAF50; /* Green */
+        }
+
+        .yellow {
+            background-color: #f6ab1f; /* Orange */
+        }
+
+        .red {
+            background-color: #ff2f00; /* Red */
+        }
+        .purple {
+            background-color: #800080; /* Purple */
+            color: white;
+        }
+
     </style>
 </head>
 <body>
@@ -96,14 +128,26 @@
         {% for prereq in results %}
             <h2>Prerequisite: {{ prereq.prereq_course_code }}</h2>
             {% if prereq.matched_courses %}
-                <ul>
-                    {% for match in prereq.matched_courses %}
-                        <li>
-                            <strong>{{ match.taken_course_code }}</strong> - {{ match.taken_description }} 
-                            (Similarity: {{ match.similarity_score * 100 }}%)
-                        </li>
-                    {% endfor %}
-                </ul>
+            <ul>
+                {% for match in prereq.matched_courses %}
+                <li class="grade-item">
+                    <span><strong>{{ match.taken_course_code }}</strong> - {{ match.taken_description }}</span>
+                    <span class="grade-box 
+                        {% if match.grade == 'N/A' %} purple
+                        {% elif match.grade in ['A+', 'A', 'A-', 'B+'] %} green
+                        {% elif match.grade in ['B', 'B-', 'C+', 'C'] %} yellow
+                        {% elif match.grade in ['C-', 'D+', 'D'] %} red
+                        {% elif match.grade|float is not none and (match.grade|float >= 84 or match.grade|float <= 1.75) %} green
+                        {% elif match.grade|float is not none and ((70 <= match.grade|float < 84) or (1.75 < match.grade|float <= 2.50)) %} yellow
+                        {% elif match.grade|float is not none and ((match.grade|float < 70) or (2.50 < match.grade|float <= 3.00)) %} red
+                        {% else %} red {% endif %}">
+                        {{ match.grade }}
+                    </span>
+
+                </li>
+                {% endfor %}
+            </ul>
+            
             {% else %}
                 <p style="margin-bottom: 15px;">No matching courses found.</p>
             {% endif %}
