@@ -5,6 +5,7 @@ from pdf2image import convert_from_path
 import pytesseract
 import json
 import logging
+import numpy as np
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -35,11 +36,12 @@ def extract_structured_data(text):
         line = line.strip()  # Remove leading/trailing spaces
 
         # Remove random unwanted characters (keep alphanumeric, spaces, and essential symbols)
-        line = re.sub(r"[^A-Za-z0-9\s.,()-]", " ", line)  # Keeps letters, numbers, spaces, periods, commas, parentheses
-        line = re.sub(r'\bll\b', '11', line)  # Fix 'll' → '11'
-        line = re.sub(r'\bl\b', '1', line)    # Fix 'l' → '1'
-        line = re.sub(r"\s+", " ", line).strip()  # Normalize multiple space
+        # line = re.sub(r"[^A-Za-z0-9\s.,()-]", " ", line)  # Keeps letters, numbers, spaces, periods, commas, parentheses
+        # line = re.sub(r'\bll\b', '11', line)  # Fix 'll' → '11'
+        # line = re.sub(r'\bl\b', '1', line)    # Fix 'l' → '1'
+        # line = re.sub(r"\s+", " ", line).strip()  # Normalize multiple space
         # Match course details
+        
         course_match = course_pattern.match(line)
         if course_match:
             course_code = course_match.group(1).strip()
@@ -58,7 +60,9 @@ def extract_structured_data(text):
 
 def extract_text_from_pdf(pdf_path):
     doc = convert_from_path(pdf_path)
+    doc = convert_from_path(pdf_path, dpi=300)  # Default is 200
 
+    raw_text_output = ""  # Holds raw text from OCR
     structured_data_processed = {}  # Holds structured data from pre-processed text
     processed_text_output = ""  # Pre-processed OCR text
 
@@ -71,7 +75,10 @@ def extract_text_from_pdf(pdf_path):
             processed_image = enhancer.enhance(2)
 
             # Extract text from the processed image
-            processed_text = pytesseract.image_to_string(processed_image)
+            custom_config = r'--oem 3 --psm 6'  # LSTM-based, assume block of text
+            raw_text = pytesseract.image_to_string(processed_image, config=custom_config)
+            processed_text = "\n".join(preprocess(raw_text))
+            raw_text_output += f"\n\n=== Page {page_number + 1} ===\n{raw_text}"
             processed_text_output += f"\n\n=== Page {page_number + 1} ===\n{processed_text}"
 
             # Store structured data for both raw and pre-processed text
@@ -83,7 +90,42 @@ def extract_text_from_pdf(pdf_path):
 
     # Convert structured data to JSON format for easy reading
     return json.dumps({
+        "raw_text": raw_text_output.strip(),
         "processed_text": processed_text_output.strip(),
         "structured_data_processed": structured_data_processed
     }, ensure_ascii=False, indent=4)
 
+
+def is_probable_course_line(line):
+    line = line.strip()
+
+    # Ends with a number (unit) — common pattern for units
+    ends_with_unit = re.search(r"(\d+|\(\d+\))?" , line)
+
+    if not ends_with_unit:
+        return False  # discard lines without unit at the end
+
+    starts_with_course_like = re.match(
+        r"([A-Za-z]+(?:\s[A-Za-z]+)?\s*\d+(?:\.\d+)?)\s+", line
+    )
+
+    return bool(starts_with_course_like)
+
+def preprocess(raw_text):
+    cleaned_lines = []
+    for line in raw_text.splitlines():
+        line = re.sub(r'[|/\\@#*~]', '', line)  # strip symbols that sneak in
+        line = re.sub(r"[^A-Za-z0-9\s.,()-]", " ", line)  # Keep alphanum and common punct
+        line = re.sub(r'\bll\b', '11', line)  # Fix 'll' → '11'
+        line = re.sub(r'\bl\b', '1', line)    # Fix 'l' → '1'
+        line = re.sub(r"\s+", " ", line).strip()  # Normalize spacing
+
+        if is_probable_course_line(line):
+            cleaned_lines.append(line)
+    return cleaned_lines
+
+def binarize_image(pil_img):
+    np_img = np.array(pil_img)
+    threshold = 180
+    binary = (np_img > threshold) * 255  # White if above threshold, else black
+    return Image.fromarray(binary.astype('uint8'))

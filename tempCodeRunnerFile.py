@@ -1,1 +1,1 @@
-s
+extract_text

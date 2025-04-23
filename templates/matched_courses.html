@@ -128,10 +128,16 @@
         {% for prereq in results %}
             <h2>Prerequisite: {{ prereq.prereq_course_code }}</h2>
             {% if prereq.matched_courses %}
+  
             <ul>
                 {% for match in prereq.matched_courses %}
+
                 <li class="grade-item">
-                    <span><strong>{{ match.taken_course_code }}</strong> - {{ match.taken_description }}</span>
+                    <span>
+                        <strong>{{ match.taken_course_code }}</strong> - 
+                        {{ match.taken_description }} 
+                        (Similarity: {{ match.similarity_score * 100 | round(2) }}%)
+                    </span>
                     <span class="grade-box 
                         {% if match.grade == 'N/A' %} purple
                         {% elif match.grade in ['A+', 'A', 'A-', 'B+'] %} green
@@ -143,7 +149,6 @@
                         {% else %} red {% endif %}">
                         {{ match.grade }}
                     </span>
-
                 </li>
                 {% endfor %}
             </ul>

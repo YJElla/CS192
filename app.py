@@ -187,10 +187,11 @@ def result_page(student_id):
         structured_data_processed = result_dict.get("structured_data_processed", {})  # ✅ Fix variable name
     except (json.JSONDecodeError, TypeError):
         structured_data_processed = {}  # Set as empty dictionary instead of None
-
+    print(result_dict.get("raw_text", ""))
     return render_template(
         'result.html',
         student_id=student_id,
+        raw_text= result_dict.get("raw_text", ""), 
         processed_text= result_dict.get("processed_text", ""),  # Ensure `processed_text` is passed
         structured_data_processed=structured_data_processed  # ✅ Now correctly passed
     )
