@@ -1,5 +1,7 @@
 import os
-from flask import Flask, request, render_template, redirect, url_for, session, flash, jsonify
+import zipfile
+import io
+from flask import Flask, request, render_template, redirect, url_for, session, flash, jsonify,send_file
 from werkzeug.utils import secure_filename
 import pytesseract
 from PIL import Image
@@ -8,6 +10,7 @@ import mysql.connector
 import json
 from nlp import compute_similarity
 from db import get_student_courses, get_prereqs_for_program 
+from export import generate_csv_for_student, generate_xlsx_for_student
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = "C:/Users/yanni/OneDrive/Desktop/2nd Sem Year 3/CS192/CS192/uploads" #Specify folder directory
@@ -200,7 +203,7 @@ def result_page(student_id):
 @app.route('/view_courses/<student_id>')
 def view_courses(student_id):
     connection = get_db_connection()
-
+    program = request.args.get("program")  # <-- gets ?program=PhD from the URL)
     try:
         cursor = connection.cursor(buffered=True, dictionary=True)
         query = """
@@ -222,7 +225,7 @@ def view_courses(student_id):
             flash("No courses found for this student.", "error")
             return redirect(url_for('teacher_dashboard'))  
 
-        return render_template('view_courses.html', student_id=student_id,student_name=student_name , courses=courses)
+        return render_template('view_courses.html', student_id=student_id,student_name=student_name , courses=courses, program=program)
 
     except mysql.connector.Error as err:
         print(f"❌ 2 MySQL Error: {err}")
@@ -263,6 +266,7 @@ def matched_courses():
 @app.route('/redirect_program', methods=['POST'])
 def redirect_program():
     program = request.form.get('program')
+    print(program)
     student_id = request.form.get('student_id')  # Get student ID from form input
     print("STUDENT ID:", student_id)
     if program == 'phd':  
@@ -342,11 +346,57 @@ def compare_courses():
     prereqs = get_prereqs_for_program(program)
     matched_results = compute_similarity(taken_courses, prereqs)
     return render_template("matched_courses.html", results = matched_results, student=student_id)
+    
+
+@app.route('/export_files', methods=['POST'])
+def export_files():
+    student_ids = request.form.getlist('selected_students')
+    export_format = request.form.get('export_format')
+
+    if not student_ids:
+        flash("Please select at least one student.")
+        return redirect(url_for('teacher_dashboard'))
+
+    if export_format not in ['csv', 'xlsx']:
+        flash("Please select a valid export format.")
+        return redirect(url_for('teacher_dashboard'))
+
+    zip_buffer = io.BytesIO()
+
+    with zipfile.ZipFile(zip_buffer, 'w') as zipf:
+        for student_id in student_ids:
+            program = request.form.get(f'program_{student_id}')
+            taken_courses = get_student_courses(student_id)
+            prereqs = get_prereqs_for_program(program)
+            matched_results = compute_similarity(taken_courses, prereqs)
+
+            filename = f'student_{student_id}_export.{export_format}'
+
+            if export_format == 'csv':
+                csv_file = generate_csv_for_student(student_id, matched_results)
+                zipf.writestr(filename, csv_file.read())
+
+            elif export_format == 'xlsx':
+                output = io.BytesIO()
+                wb = generate_xlsx_for_student(student_id, matched_results)
+                wb.save(output)
+                output.seek(0)
+                zipf.writestr(filename, output.read())
+
+    zip_buffer.seek(0)
+    return send_file(
+        zip_buffer,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name=f'matched_exports_{export_format}.zip'
+    )
+
 
 @app.route('/logout')
 def logout():
     session.pop('user', None)
     return redirect(url_for('login'))
+
 
 @app.errorhandler(404)
 def not_found(error=None):

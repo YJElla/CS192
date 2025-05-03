@@ -35,7 +35,7 @@ def get_prereqs_for_program(program):
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
     query = """
-    SELECT prereq_course_code, description 
+    SELECT core_course_code, prereq_course_code, description 
     FROM prereqs 
     WHERE program = %s
     """

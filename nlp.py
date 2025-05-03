@@ -31,6 +31,7 @@ def compute_similarity(taken_courses, prereqs):
                 })
         
         results.append({
+            "core_course_code": prereq["core_course_code"],
             "prereq_course_code": prereq["prereq_course_code"],
             "prereq_description": prereq["description"],
             "matched_courses": matched_courses

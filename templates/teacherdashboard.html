@@ -47,11 +47,11 @@
         /* Table container */
         .table-container {
             width: 90%;
-            max-width: 600px;
+            max-width: 100%;
             background-color: white;
             box-shadow: 0px 12px 24px rgba(0, 0, 0, 0.3);
             border-radius: 8px;
-            overflow: hidden;
+            overflow-x:auto ;
         }
 
         /* Table styling */
@@ -65,7 +65,9 @@
             padding: 12px 15px;
             font-size: 14px;
         }
-
+        .hidden {
+            display: none;
+        }
         thead {
             background-color: #003F37;
             color: white;
@@ -239,51 +241,83 @@
         <h1>University of the Philippines Diliman<br>Department of Computer Science</h1>
     </div>
 
-    <!-- Table Container -->
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Student ID</th>
-                    <th>Student Name</th>
-                    <th>Action</th>
-                    <th></th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% if students %}
-                    {% for student in students %}
+    <form id="export-form" action="/export_files" method="POST">
+        <button type="button" onclick="toggleExportMode()">Export</button>
+    
+        <!-- Table Container -->
+        <div class="table-container">
+            <table>
+                <thead>
                     <tr>
-                        <td>{{ student['idStudent'] }}</td>
-                        <td>{{ student['student_name'] }}</td>
-                        <td>
-                            <a href="{{ url_for('view_courses', student_id=student['idStudent']) }}" class="generate-link">
-                                See Extracted Information
-                            </a>
-                        </td>
-                        <td>
-                            <a href="{{ url_for('result_page', student_id=student['idStudent']) }}" class="generate-link">
-                                See Raw Text
-                            </a>
-                        </td>
-                        <td>
-                            <form action="{{ url_for('remove_student', student_id=student.idStudent) }}" method="POST" 
-                                onsubmit="return confirm('Are you sure you want to remove this student?');">
-                                <button type="submit" class="delete-btn">Remove</button>
-                            </form>
-                        </td>
+                        <th class="select-column hidden">
+                            <input type="checkbox" id="select-all" onclick="toggleAll(this)">
+                        </th>
+                        <th>Student ID</th>
+                        <th>Student Name</th>
+                        <th>Program</th>
+                        <th>Action</th>
+                        <th></th>
+                        <th></th>
                     </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td colspan="3">No students found.</td>
-                    </tr>
-                {% endif %}
-            </tbody>
-            
-        </table>
-    </div>
+                </thead>
+                <tbody>
+                    {% if students %}
+                        {% for student in students %}
+                        <tr>
+                            <td class="select-column hidden">
+                                <input type="checkbox" name="selected_students" value="{{ student['idStudent'] }}">
+                            </td>
+                            <td>{{ student['idStudent'] }}</td>
+                            <td>{{ student['student_name'] }}</td>
+                            <td>
+                                <select name="program_{{ student['idStudent'] }}" required>
+                                    <option value="" disabled selected>Select a program</option>
+                                    <option value="phd">PhD</option>
+                                    <option value="ms">MS</option>
+                                    <option value="bioinformatics">Bioinformatics</option>
+                                </select>
+                            </td>
+                            <td>
+                                <a href="#" onclick="goToViewCourses('{{ student['idStudent'] }}')" class="generate-link">
+                                    See Extracted Information
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('result_page', student_id=student['idStudent']) }}" class="generate-link">
+                                    See Raw Text
+                                </a>
+                            </td>
+                            <td>
+                                <!-- Remove student button is its own separate form -->
+                                <form action="{{ url_for('remove_student', student_id=student.idStudent) }}" method="POST" 
+                                      onsubmit="return confirm('Are you sure you want to remove this student?');">
+                                    <button type="submit" class="delete-btn">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7">No students found.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    
+        <!-- Export buttons and format selection -->
+        <div id="export-controls" class="hidden" style="margin-top: 10px;">
+            <label for="export-format">Export Format:</label>
+            <select name="export_format" id="export_format" required>
+                <option value="" disabled selected>Select format</option>
+                <option value="csv">CSV </option>
+                <option value="xlsx">Excel (.xlsx)</option>
+            </select>            
+            <button type="submit">Export Selected</button>
+        </div>
+    </form>
+    
+
 
     <!-- File Upload Section -->
 <div class="upload-container">
@@ -319,6 +353,99 @@
         var input = document.getElementById('file-upload');
         var label = document.getElementById('file-label');
         label.textContent = input.files.length > 0 ? input.files[0].name : "Choose File";
+    }
+</script>
+
+<script>
+    function toggleExportMode() {
+        const selectCols = document.querySelectorAll('.select-column');
+        const exportControls = document.getElementById('export-controls');
+    
+        selectCols.forEach(col => col.classList.toggle('hidden'));
+        exportControls.classList.toggle('hidden');
+
+        // Restore selections from localStorage if available
+        restoreSelections();
+    }
+    function toggleAll(source) {
+    const checkboxes = document.querySelectorAll('input[name="selected_students"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = source.checked;
+        saveSelections();  // Save immediately
+    });
+}
+
+function saveSelections() {
+    const checkedIds = Array.from(document.querySelectorAll('input[name="selected_students"]:checked'))
+                            .map(cb => cb.value);
+    localStorage.setItem('selected_students', JSON.stringify(checkedIds));
+
+    const programs = {};
+    document.querySelectorAll('select[name^="program_"]').forEach(sel => {
+        programs[sel.name] = sel.value;
+    });
+    localStorage.setItem('program_selections', JSON.stringify(programs));
+
+    const format = document.getElementById('export-format')?.value;
+    if (format) {
+        localStorage.setItem('export_format', format);
+    }
+}
+
+function restoreSelections() {
+    const savedIds = JSON.parse(localStorage.getItem('selected_students') || '[]');
+    const savedPrograms = JSON.parse(localStorage.getItem('program_selections') || '{}');
+    const savedFormat = localStorage.getItem('export_format');
+
+    document.querySelectorAll('input[name="selected_students"]').forEach(cb => {
+        cb.checked = savedIds.includes(cb.value);
+    });
+
+    // Restore program dropdown selections
+    document.querySelectorAll('select[name^="program_"]').forEach(sel => {
+        const savedValue = savedPrograms[sel.name];
+        if (savedValue) {
+            sel.value = savedValue;
+        }
+    });
+
+    // Restore export format selection
+    if (savedFormat) {
+        const formatSelect = document.getElementById('export-format');
+        if (formatSelect) {
+            formatSelect.value = savedFormat;
+        }
+    }
+}
+
+// Save on every change
+document.addEventListener("DOMContentLoaded", () => {
+    restoreSelections(); // <-- critical
+    
+    document.querySelectorAll('input[name="selected_students"]').forEach(cb => {
+        cb.addEventListener('change', saveSelections);
+    });
+
+    document.querySelectorAll('select[name^="program_"]').forEach(sel => {
+        sel.addEventListener('change', saveSelections);
+    });
+
+    document.getElementById('export-format')?.addEventListener('change', saveSelections);
+});
+</script>
+
+<script>
+    function goToViewCourses(studentId) {
+        const select = document.querySelector(`select[name="program_${studentId}"]`);
+        const selectedProgram = select?.value;
+    
+        if (!selectedProgram) {
+            alert("Please select a program first.");
+            return;
+        }
+    
+        const url = `/view_courses/${studentId}?program=${encodeURIComponent(selectedProgram)}`;
+        window.location.href = url;
     }
 </script>
 
