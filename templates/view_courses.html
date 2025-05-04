@@ -109,7 +109,7 @@
             margin-top: 20px;
             width: 90%;
             max-width: 600px;
-            margin-bottom: 50px;
+            margin-bottom: 10px;
         }
 
         .upload-container h2 {
@@ -155,7 +155,29 @@
         h2:nth-of-type(2) {
             margin-bottom: 20px; /* Adjust spacing as needed */
         }
-
+        .edit-btn {
+            background-color: #004d40; /* Deep teal */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease;
+        }
+        .edit-btn:hover {
+            background-color: #00695c; /* Lighter teal on hover */
+        }
+        .top-bar {
+            width: 90%;
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -170,7 +192,6 @@
     <h2>Transcript for Student Name: {{ student_name.student_name }}</h2>
 
     <div class="upload-container">
-        <h2>Select Relevant Courses:</h2>
         <form action="{{ url_for('redirect_program') }}" method="POST">
             <input type="hidden" name="student_id" value="{{ student_id }}"> 
             <input type="hidden" name="program" value="{{ program }}">
@@ -181,9 +202,15 @@
         </form>
     </div>
 
-    <div class="table-container">
+
+    <div class="top-bar">
+        <button id="edit-toggle" class="edit-btn">Edit</button>
+        <button id="save-changes" class="edit-btn"style="display:none;">Save</button>
+    </div>
+    <!-- Updated portion of view_courses.html -->
+<div class="table-container">
     {% if courses %}
-        <table>
+        <table id="courses-table">
             <thead>
                 <tr>
                     <th>ID</th>
@@ -191,16 +218,18 @@
                     <th>Description</th>
                     <th>Grade</th>
                     <th>Units</th>
+                    <th class="edit-col" style="display:none;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for course in courses %}
-                <tr>
-                    <td>{{ loop.index }}</td>  <!-- This automatically numbers 1-N -->
-                    <td>{{ course.course_code }}</td>
-                    <td>{{ course.description }}</td>
-                    <td>{{ course.grade }}</td>
-                    <td>{{ course.units }}</td>
+                <tr data-id="{{ course.id }}">
+                    <td>{{ loop.index }}</td>
+                    <td class="editable">{{ course.course_code }}</td>
+                    <td class="editable">{{ course.description }}</td>
+                    <td class="editable">{{ course.grade }}</td>
+                    <td class="editable">{{ course.units }}</td>
+                    <td class="edit-col" style="display:none;"><button class="remove-row">Remove</button></td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -209,6 +238,92 @@
         <p>No courses found for this student.</p>
     {% endif %}
 </div>
+
+<script>
+    const editToggle = document.getElementById('edit-toggle');
+    const saveButton = document.getElementById('save-changes');
+    const table = document.getElementById('courses-table');
+    let isEditing = false;
+
+    editToggle.addEventListener('click', () => {
+        isEditing = !isEditing;
+        editToggle.textContent = isEditing ? 'Cancel' : 'Edit';
+        saveButton.style.display = isEditing ? 'inline-block' : 'none';
+
+        table.querySelectorAll('tbody td.editable').forEach(cell => {
+            cell.contentEditable = isEditing;
+            cell.style.backgroundColor = isEditing ? '#eef' : '';
+        });
+
+        document.querySelectorAll('.edit-col').forEach(col => {
+            col.style.display = isEditing ? 'table-cell' : 'none';
+        });
+    });
+
+    document.addEventListener('click', function(event) {
+    if (event.target.classList.contains('remove-row')) {
+        const row = event.target.closest('tr');
+        const transcriptId = row.dataset.id;
+
+        fetch(`/delete_course/${transcriptId}`, {
+            method: 'DELETE'
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                row.remove();
+            } else {
+                alert('Failed to delete course');
+            }
+        })
+        .catch(() => alert('Error deleting course.'));
+    }
+    });
+
+    saveButton.addEventListener('click', () => {
+        const editedRows = [];
+        const rows = table.querySelectorAll('tbody tr');
+
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            editedRows.push({
+                id: row.dataset.id,
+                course_code: cells[1].textContent.trim(),
+                description: cells[2].textContent.trim(),
+                grade: cells[3].textContent.trim(),
+                units: cells[4].textContent.trim()
+            });
+        });
+
+        fetch('/save_courses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ student_id: "{{ student_id }}", courses: editedRows })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.message || 'Saved.');
+            // Revert to non-edit mode
+            isEditing = false;
+            editToggle.textContent = 'Edit';
+            saveButton.style.display = 'none';
+
+            table.querySelectorAll('tbody td.editable').forEach(cell => {
+                cell.contentEditable = false;
+                cell.style.backgroundColor = '';
+            });
+
+            document.querySelectorAll('.edit-col').forEach(col => {
+                col.style.display = 'none';
+            });
+        })
+        .catch(() => alert('Error saving changes.'));
+    });
+
+    
+</script>
+
+
     <a href="{{ url_for('teacher_dashboard') }}" class = "updateinfo-button">Back to Dashboard</a>
     <!-- Program Selection Dropdown -->
 
