@@ -23,6 +23,10 @@
             padding: 20px;
         }
 
+        button, input, select {
+            font-family: 'Nunito', sans-serif;
+            font-size: 14px;
+        }
         /* Header styling */
         .header {
             text-align: center;
@@ -47,23 +51,25 @@
         /* Table container */
         .table-container {
             width: 90%;
-            max-width: 100%;
+            max-width: 1000px;
             background-color: white;
             box-shadow: 0px 12px 24px rgba(0, 0, 0, 0.3);
             border-radius: 8px;
-            overflow-x:auto ;
+            overflow-x: auto;
+            margin: 20px auto; /* Center and add spacing */
         }
 
         /* Table styling */
         table {
             width: 100%;
             border-collapse: collapse;
-            text-align: left;
+            text-align: center;
         }
 
         th, td {
-            padding: 12px 15px;
+            padding: 16px 15px;
             font-size: 14px;
+            vertical-align: middle; /* keep text aligned nicely */
         }
         .hidden {
             display: none;
@@ -112,6 +118,7 @@
             margin-top: 20px;
             width: 90%;
             max-width: 600px;
+            margin: 20px auto;
         }
 
         .upload-container h2 {
@@ -146,7 +153,13 @@
             cursor: pointer;
             font-weight: bold;
         }
-
+        select {
+            padding: 8px 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+            width: 150px;
+        }
         button:hover {
             background-color: #005f46;
         }
@@ -161,19 +174,6 @@
         /* Styling for the file input */
         input[type="file"] {
             display: none; /* Hide default input */
-        }
-
-        .file-label {
-            background-color: #003F37;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
-            font-weight: bold;
-            cursor: pointer;
-            text-align: center;
-            display: inline-block;
-            width: 200px; /* Set width */
-            text-align: center;
         }
 
         /* Styling for the upload button */
@@ -192,19 +192,22 @@
         .upload-btn:hover, .file-label:hover {
             background-color: #005f50;
         }
+
         .file-label {
-            display: inline-block;
-            padding: 10px 20px;
             background-color: #004d40;
             color: white;
+            padding: 10px 20px;
             border-radius: 5px;
             cursor: pointer;
             font-weight: bold;
+            text-align: center;
+            display: inline-block;
+            width: 200px;
         }
-
         .file-label:hover {
             background-color: #00695c;
         }
+
 
         .form-fields {
             display: flex;
@@ -229,7 +232,42 @@
             background-color: darkred;
         }
 
+        .top-bar {
+            width: 90%;
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
 
+        .export-btn {
+            background-color: #004d40; /* Deep teal */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease;
+        }
+
+        .export-btn:hover {
+            background-color: #00695c; /* Lighter teal on hover */
+        }
+
+        .bottom-bar {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .bottom-bar a:hover {
+            background-color: #BDBDBD;
+        }   
     </style>
 </head>
 <body>
@@ -242,7 +280,9 @@
     </div>
 
     <form id="export-form" action="/export_files" method="POST">
-        <button type="button" onclick="toggleExportMode()">Export</button>
+        <div class="top-bar">
+            <button type="button" onclick="toggleExportMode()" class="export-btn">Export</button>
+        </div>
     
         <!-- Table Container -->
         <div class="table-container">
@@ -449,7 +489,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 </script>
 
-    <a href="{{ url_for('logout') }}" class="updateinfo-button">Log out</a>
+    <div class="bottom-bar">
+        <a href="{{ url_for('logout') }}" class="updateinfo-button">Log out</a>
+    </div>
+
 
 </body>
 </html>

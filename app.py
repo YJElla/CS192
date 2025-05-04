@@ -279,18 +279,6 @@ def redirect_program():
         flash("Invalid selection. Please choose a valid program.")
         return redirect(url_for('teacher_dashboard'))
 
-@app.route('/phd')
-def phd():
-    return redirect(url_for('compare_courses', program='PhD'))
-
-@app.route('/ms')
-def ms_page():
-    return render_template('ms.html')
-
-@app.route('/bioinformatics')
-def bioinformatics_page():
-    return render_template('bioinformatics.html')
-
 @app.route('/add_prereq', methods=['POST'])
 def add_prereq():
     program = request.form['program']
