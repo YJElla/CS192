@@ -49,7 +49,7 @@
             border-radius: 8px;
             overflow: hidden;
             padding: 20px;
-            margin-top: 20px;
+            margin-top: 10px;
         }
 
         h2 {
@@ -113,6 +113,29 @@
             color: white;
         }
 
+        .edit-btn {
+            background-color: #004d40; /* Deep teal */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease;
+        }
+        .edit-btn:hover {
+            background-color: #00695c; /* Lighter teal on hover */
+        }
+        .top-bar {
+            width: 90%;
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: flex-end;
+
+        }
     </style>
 </head>
 <body>
@@ -142,6 +165,12 @@
     </div>
     
     
+    <div class="top-bar">
+        <button id="edit-toggle" class="edit-btn">Edit</button>
+        <button id="save-changes" class="edit-btn"style="display:none;">Save</button>
+    </div>
+    
+        
     <div class="table-container">
         {% for prereq in results %}
             <h2>Prerequisite: {{ prereq.prereq_course_code }}</h2>
@@ -176,10 +205,10 @@
                 <p style="margin-bottom: 15px;">No matching courses found.</p>
             {% endif %}
         {% endfor %}
+        <th class="edit-col" style="display:none;">Actions</th>
+
     </div>
-    <a href="{{ url_for('export_files', student_id=student, program=request.args.get('program')) }}" class="button">
-        Download as CSV
-    </a>
+  
     <a href="{{ url_for('teacher_dashboard') }}" class="back-button">Back to Dashboard</a>
 </body>
 </html>
