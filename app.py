@@ -378,7 +378,54 @@ def export_files():
         as_attachment=True,
         download_name=f'matched_exports_{export_format}.zip'
     )
+@app.route('/save_courses', methods=['POST'])
+def save_courses():
+    data = request.get_json()
+    student_id = data['student_id']
+    courses = data['courses']
 
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    try:
+        for course in courses:
+            update_query = """
+                UPDATE transcripts t
+                JOIN courses c ON t.course_id = c.id
+                SET c.course_code = %s, c.description = %s, t.grade = %s, t.units = %s
+                WHERE t.student_id = %s AND t.id = %s
+            """
+            cursor.execute(update_query, (
+                course['course_code'], course['description'],
+                course['grade'], course['units'],
+                student_id, course['id']
+            ))
+        connection.commit()
+        return jsonify({'message': 'Courses updated successfully!'}), 200
+    except Exception as e:
+        print("Error updating:", e)
+        return jsonify({'message': 'Failed to update courses.'}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
+@app.route('/delete_course/<int:transcript_id>', methods=['DELETE'])
+def delete_course(transcript_id):
+    connection = get_db_connection()
+    if not connection:
+        return jsonify(success=False, message="DB connection failed")
+
+    try:
+        cursor = connection.cursor()
+        cursor.execute("DELETE FROM transcripts WHERE id = %s", (transcript_id,))
+        connection.commit()
+        return jsonify(success=True)
+    except Exception as e:
+        print("Delete error:", e)
+        return jsonify(success=False, message="DB error")
+    finally:
+        cursor.close()
+        connection.close()
 
 @app.route('/logout')
 def logout():
