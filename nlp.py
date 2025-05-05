@@ -27,7 +27,8 @@ def compute_similarity(taken_courses, prereqs):
                     "taken_course_code": taken_course["course_code"],
                     "taken_description": taken_course["description"],
                     "grade": taken_course["grade"],
-                    "similarity_score": round(similarity_score, 2)
+                    "similarity_score": round(similarity_score, 2),
+                    "taken_course_id": taken_course["id"]
                 })
         
         results.append({

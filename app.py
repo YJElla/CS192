@@ -257,12 +257,6 @@ def teacher_dashboard():
 
     return render_template('teacherdashboard.html', students=students or [])
 
-@app.route('/matched_courses')
-def matched_courses():
-    # Your function logic
-    return render_template('matched_courses.html')
-
-
 @app.route('/redirect_program', methods=['POST'])
 def redirect_program():
     program = request.form.get('program')
@@ -333,7 +327,7 @@ def compare_courses():
     taken_courses = get_student_courses(student_id)
     prereqs = get_prereqs_for_program(program)
     matched_results = compute_similarity(taken_courses, prereqs)
-    return render_template("matched_courses.html", results = matched_results, student=student_id)
+    return render_template("matched_courses.html", results = matched_results, student_id=student_id)
     
 
 @app.route('/export_files', methods=['POST'])
@@ -378,33 +372,48 @@ def export_files():
         as_attachment=True,
         download_name=f'matched_exports_{export_format}.zip'
     )
+
 @app.route('/save_courses', methods=['POST'])
 def save_courses():
     data = request.get_json()
     student_id = data['student_id']
     courses = data['courses']
-
     connection = get_db_connection()
     cursor = connection.cursor()
 
+    # AVOUD DUPLICATES
+    unique_course_updates = {}
+    for course in courses:
+        course_id = course['id']  
+        if course_id not in unique_course_updates:
+            unique_course_updates[course_id] = {
+                'course_code': course['course_code'],
+                'description': course['description']
+            }
+
     try:
+        for course_id, info in unique_course_updates.items():
+            cursor.execute("""
+                UPDATE courses
+                SET course_code = %s, description = %s
+                WHERE id = %s
+            """, (info['course_code'], info['description'], course_id))
+
         for course in courses:
-            update_query = """
-                UPDATE transcripts t
-                JOIN courses c ON t.course_id = c.id
-                SET c.course_code = %s, c.description = %s, t.grade = %s, t.units = %s
-                WHERE t.student_id = %s AND t.id = %s
-            """
-            cursor.execute(update_query, (
-                course['course_code'], course['description'],
-                course['grade'], course['units'],
-                student_id, course['id']
-            ))
+            transcript_id = course['id']  # This should refer to the transcript row ID
+            cursor.execute("""
+                UPDATE transcripts
+                SET grade = %s, units = %s
+                WHERE id = %s AND student_id = %s
+            """, (course['grade'], course['units'], transcript_id, student_id))
+
         connection.commit()
         return jsonify({'message': 'Courses updated successfully!'}), 200
+
     except Exception as e:
         print("Error updating:", e)
         return jsonify({'message': 'Failed to update courses.'}), 500
+
     finally:
         cursor.close()
         connection.close()

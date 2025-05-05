@@ -50,7 +50,8 @@
             background-color: white;
             box-shadow: 0px 12px 24px rgba(0, 0, 0, 0.3);
             border-radius: 8px;
-            overflow: hidden;
+            overflow-x: auto;      /* Enables horizontal scroll */
+
         }
 
         /* Table styling */
@@ -293,6 +294,11 @@
                 grade: cells[3].textContent.trim(),
                 units: cells[4].textContent.trim()
             });
+        });
+
+        console.log({
+            student_id: "{{ student_id }}",
+            matched_courses: editedRows
         });
 
         fetch('/save_courses', {

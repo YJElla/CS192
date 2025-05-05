@@ -1,8 +1,9 @@
 UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `transcripts`;
-DROP TABLE IF EXISTS `courses`;
 DROP TABLE IF EXISTS `prereqs`;
+DROP TABLE IF EXISTS `courses`;
+
 DROP TABLE IF EXISTS `student`;
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -49,7 +50,7 @@ CREATE TABLE prereqs (
     program ENUM('MS', 'PhD', 'Bioinformatics') NOT NULL,  
     core_course_code VARCHAR(50) NOT NULL,
     prereq_course_code VARCHAR(50) NOT NULL,  
-    description VARCHAR(1000) NOT NULL  
+    description VARCHAR(1000) NOT NULL
 );
 
 INSERT INTO prereqs (program, core_course_code, prereq_course_code, description) VALUES

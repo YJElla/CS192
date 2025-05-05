@@ -47,9 +47,10 @@
             background-color: white;
             box-shadow: 0px 12px 24px rgba(0, 0, 0, 0.3);
             border-radius: 8px;
-            overflow: hidden;
             padding: 20px;
             margin-top: 10px;
+            overflow-x: auto;      /* Enables horizontal scroll */
+
         }
 
         h2 {
@@ -136,6 +137,16 @@
             justify-content: flex-end;
 
         }
+
+        .editable-field {
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        .editable-field[contenteditable="true"] {
+            background-color: #eef;
+            border: 1px dashed #888;
+        }
+
     </style>
 </head>
 <body>
@@ -179,10 +190,11 @@
             <ul>
                 {% for match in prereq.matched_courses %}
 
-                <li class="grade-item">
+                <li class="grade-item" data-id="{{ match.taken_course_id }}" data-units="{{ match.units }}">
                     <span>
-                        <strong>{{ match.taken_course_code }}</strong> - 
-                        {{ match.taken_description }} 
+                        <strong class="editable-field taken-course" contenteditable="false">{{ match.taken_course_code }}</strong> - 
+                        <span class="editable-field taken-description" contenteditable="false">{{ match.taken_description }}</span> -
+                        <span class="editable-field taken-grade" contenteditable="false">{{ match.grade }}</span>
                         (Similarity: {{ match.similarity_score * 100 | round(2) }}%)
                     </span>
                     <span class="grade-box 
@@ -201,14 +213,70 @@
                 
             </ul>
             
+            
             {% else %}
                 <p style="margin-bottom: 15px;">No matching courses found.</p>
             {% endif %}
         {% endfor %}
-        <th class="edit-col" style="display:none;">Actions</th>
 
     </div>
   
     <a href="{{ url_for('teacher_dashboard') }}" class="back-button">Back to Dashboard</a>
+
+<script>
+    const editToggle = document.getElementById('edit-toggle');
+    const saveButton = document.getElementById('save-changes');
+    let isEditing = false;
+    
+    editToggle.addEventListener('click', () => {
+        isEditing = !isEditing;
+        editToggle.textContent = isEditing ? 'Cancel' : 'Edit';
+        saveButton.style.display = isEditing ? 'inline-block' : 'none';
+    
+        document.querySelectorAll('.editable-field').forEach(el => {
+            el.contentEditable = isEditing;
+        });
+    });
+    
+    saveButton.addEventListener('click', () => {
+        const editedMatches = [];
+    
+        document.querySelectorAll('.grade-item').forEach(item => {
+            editedMatches.push({
+                id: item.dataset.id,
+                course_code: item.querySelector('.taken-course').textContent.trim(),
+                description: item.querySelector('.taken-description').textContent.trim(),
+                grade: item.querySelector('.taken-grade').textContent.trim(),
+                units: item.dataset.units  // pull from hidden data
+
+            });
+        });
+        console.log({
+            student_id: "{{ student_id }}",
+            matched_courses: editedMatches
+        });
+        fetch('/save_courses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                student_id: "{{ student_id }}",
+                courses: editedMatches
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.message || 'Changes saved successfully.');
+            isEditing = false;
+            editToggle.textContent = 'Edit';
+            saveButton.style.display = 'none';
+    
+            document.querySelectorAll('.editable-field').forEach(el => {
+                el.contentEditable = false;
+            });
+        })
+        .catch(() => alert('Failed to save changes.'));
+    });
+</script>
+        
 </body>
 </html>

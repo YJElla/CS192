@@ -18,7 +18,7 @@ def get_student_courses(student_id):
     cursor = connection.cursor(dictionary=True)
 
     query = """
-    SELECT c.course_code, c.description, t.grade 
+    SELECT t.id, c.course_code, c.description, t.grade 
     FROM transcripts t
     JOIN courses c ON t.course_id = c.id
     WHERE t.student_id = %s
