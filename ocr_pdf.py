@@ -20,8 +20,11 @@ def fix_grade(grade):
     
     return grade  # Return unchanged if it's already valid
 
-def extract_structured_data(text):
+def extract_structured_data(text,seen_keys):
     structured_data = []
+    
+    # to remove duplicates and keep the first occurrence
+
 
     # Define regex patterns                
     course_pattern = re.compile(
@@ -32,15 +35,9 @@ def extract_structured_data(text):
     )
 
 
+
     for line in text.splitlines():
         line = line.strip()  # Remove leading/trailing spaces
-
-        # Remove random unwanted characters (keep alphanumeric, spaces, and essential symbols)
-        # line = re.sub(r"[^A-Za-z0-9\s.,()-]", " ", line)  # Keeps letters, numbers, spaces, periods, commas, parentheses
-        # line = re.sub(r'\bll\b', '11', line)  # Fix 'll' → '11'
-        # line = re.sub(r'\bl\b', '1', line)    # Fix 'l' → '1'
-        # line = re.sub(r"\s+", " ", line).strip()  # Normalize multiple space
-        # Match course details
         
         course_match = course_pattern.match(line)
         if course_match:
@@ -49,16 +46,23 @@ def extract_structured_data(text):
             grade = fix_grade(course_match.group(3).strip()) if course_match.group(3) else "N/A"
             units = course_match.group(4).strip() if course_match.group(4) else "Unknown"
 
-            structured_data.append({
-                "Course Code": course_code,
-                "Description": description,
-                "Grade": grade,
-                "Units": units
-            })
-
+            key = (course_code.upper(), description.lower().strip())
+            #print("KEY:", key)  # Debug print
+            if key not in seen_keys:
+                structured_data.append({
+                    "Course Code": course_code,
+                    "Description": description,
+                    "Grade": grade,
+                    "Units": units
+                })
+                #print("Seen Keys:", seen_keys)  # Debug print
+                seen_keys.add(key)
+            else:
+                print("Duplicate found:", key)
     return structured_data
 
 def extract_text_from_pdf(pdf_path):
+    seen_keys = set()
     doc = convert_from_path(pdf_path)
     doc = convert_from_path(pdf_path, dpi=300)  # Default is 200
 
@@ -82,7 +86,7 @@ def extract_text_from_pdf(pdf_path):
             processed_text_output += f"\n\n=== Page {page_number + 1} ===\n{processed_text}"
 
             # Store structured data for both raw and pre-processed text
-            structured_data_processed[f"Page_{page_number + 1}"] = extract_structured_data(processed_text)
+            structured_data_processed[f"Page_{page_number + 1}"] = extract_structured_data(processed_text,seen_keys)
 
         except Exception as e:
             logging.error(f"Error processing page {page_number + 1}: {e}")

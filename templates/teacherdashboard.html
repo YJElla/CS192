@@ -293,9 +293,7 @@
                         <th>Student ID</th>
                         <th>Student Name</th>
                         <th>Program</th>
-                        <th>Action</th>
-                        <th></th>
-                        <th></th>
+                        <th colspan = "3">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -310,19 +308,19 @@
                             <td>
                                 <select name="program_{{ student['idStudent'] }}" required>
                                     <option value="" disabled selected>Select a program</option>
-                                    <option value="phd">PhD</option>
-                                    <option value="ms">MS</option>
+                                    <option value="ms">MSc CS</option>
                                     <option value="bioinformatics">Bioinformatics</option>
+                                    <option value="phd">Ph.D CS</option>
                                 </select>
                             </td>
                             <td>
                                 <a href="#" onclick="goToViewCourses('{{ student['idStudent'] }}')" class="generate-link">
-                                    See Extracted Information
+                                    View Courses
                                 </a>
                             </td>
                             <td>
                                 <a href="{{ url_for('result_page', student_id=student['idStudent']) }}" class="generate-link">
-                                    See Raw Text
+                                    View Extracted Text
                                 </a>
                             </td>
                             <td>
@@ -354,7 +352,7 @@
     <!-- File Upload Section -->
 <div class="upload-container">
     <h2>Upload a PDF or Image for OCR</h2>
-    <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+    <form id="upload-form" action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
         <div class="file-input-container">
             <label for="file-upload" class="file-label" id="file-label">Choose File</label>
             <input type="file" id="file-upload" name="file" accept=".pdf,.png,.jpg,.jpeg" required onchange="updateFileLabel()">
@@ -372,7 +370,7 @@
          {% endwith %}
          <div class="form-fields">
             <label for="student_id">Application ID:</label>
-            <input type="text" name="student_id" required pattern="\d+" title="Only digits allowed">
+            <input type="text" name="student_id" id="student_id" required pattern="\d+" title="Only digits allowed">
             
             <label for="student_name">Student Name:</label>
             <input type="text" name="student_name" required>
@@ -493,6 +491,34 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 </script>
 
+<script>
+    document.getElementById('upload-form').addEventListener('submit', async function (e) {
+        e.preventDefault(); // prevent actual form submit
+    
+        const form = this;
+        const formData = new FormData(form);
+        const studentId = formData.get("student_id");
+    
+        const response = await fetch("/check_student_id", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ student_id: studentId })
+        });
+    
+        const data = await response.json();
+    
+        if (data.exists) {
+            const confirmReplace = confirm("A student with this ID already exists. Do you want to replace their data?");
+            if (!confirmReplace) {
+                alert("Upload canceled.");
+                return;
+            }
+        }
+    
+        form.submit(); // now allow the form to actually submit
+    });
+</script>
+    
     <div class="bottom-bar">
         <a href="{{ url_for('logout') }}" class="updateinfo-button">Log out</a>
     </div>

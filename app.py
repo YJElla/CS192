@@ -43,12 +43,8 @@ def login():
 def login_post():
     email = request.form['email']
     password = request.form['password']
-    stay_signed_in = 'stay_signed_in' in request.form
     connection = get_db_connection()
-    if stay_signed_in:
-        session.permanent = True  # Sets session lifetime if configured
-    else:
-        session.permanent = False  # Session will expire when the browser is closed
+
     
     if email == "teacher@up.edu.ph" and password == "pass":
         session['user'] = email # Store user in session
@@ -66,11 +62,8 @@ def login_post():
 
         if user:                        #if user is in the database/ already signed up 
             session['user'] = user['email']
-            # session['role'] = user['role']
-            # if user['role'] == 'student':
             return redirect(url_for('status')) #redirect to status page
-            # elif user['role'] == 'teacher':
-            #     return redirect(url_for('teacherdashboard'))
+
         else:
             flash('Invalid credentials. Please try again.')
             return redirect(url_for('login'))
@@ -104,9 +97,10 @@ def upload_file():
 
         if file.filename.lower().endswith('.pdf'):
             text = extract_text_from_pdf(file_path)
+
         else:
             text = extract_text_from_image(file_path)
-
+   
         result_dict = json.loads(text)
         structured_data = result_dict.get("structured_data_processed", {})
 
@@ -116,12 +110,17 @@ def upload_file():
 
         # Check if student exists
 
-        cursor.execute("SELECT idStudent FROM student WHERE idStudent = %s", (student_id,))
-        existing_student = cursor.fetchone()
+        # Upsert student
+        cursor.execute("""
+            INSERT INTO student (idStudent, student_name, extracted_text)
+            VALUES (%s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                student_name = VALUES(student_name),
+                extracted_text = VALUES(extracted_text)
+        """, (student_id, student_name, text))
 
-        if not existing_student:
-            student_insert_query = "INSERT INTO student (idStudent, student_name) VALUES (%s, %s)"
-            cursor.execute(student_insert_query, (student_id, student_name))
+
+        cursor.execute("DELETE FROM transcripts WHERE student_id = %s", (student_id,))
 
         # Insert Courses & Transcripts
         for page, courses in structured_data.items():
@@ -170,35 +169,69 @@ def upload_file():
                 connection.close()
         except Exception as e:
             print(f"⚠️ Cleanup Error: {e}")
-            
+           
+@app.route('/check_student_id', methods=['POST'])
+def check_student_id():
+    student_id = request.json.get('student_id')
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute("SELECT idStudent FROM student WHERE idStudent = %s", (student_id,))
+    exists = cursor.fetchone() is not None
+    cursor.close()
+    connection.close()
+    return jsonify({'exists': exists})
+
 @app.route('/result_page/<student_id>')
 def result_page(student_id):
+    connection = get_db_connection()
+
     if 'user' not in session:
         flash("You need to log in to view this page.")
         return redirect(url_for('login'))
 
-    pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{student_id}.pdf")  # Ensure correct folder
-
-    if not os.path.exists(pdf_path):
-        flash("TOR not found for this student.")
-        return redirect(url_for('teacher_dashboard'))
-
-    extracted_text = extract_text_from_pdf(pdf_path)  # Extract text from PDF
-    result_dict = json.loads(extracted_text)  # Attempt JSON parsing
-    # 🔹 Ensure JSON parsing is safe
     try:
-        structured_data_processed = result_dict.get("structured_data_processed", {})  # ✅ Fix variable name
-    except (json.JSONDecodeError, TypeError):
-        structured_data_processed = {}  # Set as empty dictionary instead of None
-    print(result_dict.get("raw_text", ""))
-    return render_template(
-        'result.html',
-        student_id=student_id,
-        raw_text= result_dict.get("raw_text", ""), 
-        processed_text= result_dict.get("processed_text", ""),  # Ensure `processed_text` is passed
-        structured_data_processed=structured_data_processed  # ✅ Now correctly passed
-    )
+        cursor = connection.cursor(buffered=True)
+        pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{student_id}.pdf")  # Ensure correct folder
 
+        if not os.path.exists(pdf_path):
+            flash("TOR not found for this student.")
+            return redirect(url_for('teacher_dashboard'))
+
+        cursor.execute(
+            "SELECT extracted_text FROM student WHERE idStudent = %s",
+            (student_id,)
+        )
+        extracted_text = cursor.fetchone()[0]
+
+        
+        result_dict = json.loads(extracted_text)  # Attempt JSON parsing
+        # 🔹 Ensure JSON parsing is safe
+        try:
+            structured_data_processed = result_dict.get("structured_data_processed", {})  # ✅ Fix variable name
+        except (json.JSONDecodeError, TypeError):
+            structured_data_processed = {}  # Set as empty dictionary instead of None
+        
+        connection.commit()
+        return render_template(
+            'result.html',
+            student_id=student_id,
+            raw_text= result_dict.get("raw_text", ""), 
+            processed_text= result_dict.get("processed_text", ""),  # Ensure `processed_text` is passed
+            structured_data_processed=structured_data_processed  # ✅ Now correctly passed
+        )
+    except mysql.connector.Error as err:
+        print(f"❌ 1 MySQL Error: {err}")
+        flash("An error occurred while processing the data. Results page", "error")
+        connection.rollback()
+        return redirect(url_for('teacher_dashboard'))
+    finally:
+        try:
+            if 'cursor' in locals():
+                cursor.close()
+            if 'connection' in locals() and connection.is_connected():
+                connection.close()
+        except Exception as e:
+            print(f"⚠️ Cleanup Error: {e}")
 
 @app.route('/view_courses/<student_id>')
 def view_courses(student_id):
@@ -265,9 +298,7 @@ def redirect_program():
         flash("You need to log in to view this page.")
         return redirect(url_for('login'))
     program = request.form.get('program')
-    print(program)
     student_id = request.form.get('student_id')  # Get student ID from form input
-    print("STUDENT ID:", student_id)
     if program == 'phd':  
         return redirect(url_for('compare_courses', program= program, student_id=student_id))
     elif program == 'ms':
@@ -299,7 +330,6 @@ def add_prereq():
 
 @app.route('/remove_student/<student_id>', methods=['POST'])
 def remove_student(student_id):
-    print(f"🔍 Received request to remove student: {student_id}")
 
     connection = get_db_connection()
     if not connection:

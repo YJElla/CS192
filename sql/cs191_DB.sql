@@ -21,6 +21,8 @@ CREATE TABLE `student` (
   `university` char(255),
   `years_attended` char(20),
   `degree_title` char(255),
+  `extracted_text` LONGTEXT, 
+
   PRIMARY KEY (`idStudent`)
 );
 
@@ -38,7 +40,7 @@ CREATE TABLE transcripts (
     student_id INT NOT NULL,
     semester VARCHAR(50),
     academic_year VARCHAR(20),
-    course_id INT,
+    course_id INT, 
     grade VARCHAR(10),
     units VARCHAR(10),
     FOREIGN KEY (student_id) REFERENCES student(idStudent),
