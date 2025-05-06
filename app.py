@@ -43,9 +43,12 @@ def login():
 def login_post():
     email = request.form['email']
     password = request.form['password']
-    
+    stay_signed_in = 'stay_signed_in' in request.form
     connection = get_db_connection()
-
+    if stay_signed_in:
+        session.permanent = True  # Sets session lifetime if configured
+    else:
+        session.permanent = False  # Session will expire when the browser is closed
     
     if email == "teacher@up.edu.ph" and password == "pass":
         session['user'] = email # Store user in session
@@ -75,13 +78,6 @@ def login_post():
         cursor.close()
         connection.close()
 
-
-@app.route('/teacherdashboard')
-def teacherdashboard():
-    # Check if the user is logged in
-    if 'user' not in session:
-        return redirect(url_for('login'))
-    return render_template('teacherdashboard.html')
 
 @app.route('/upload_file', methods=['POST'])
 def upload_file():
@@ -177,6 +173,10 @@ def upload_file():
             
 @app.route('/result_page/<student_id>')
 def result_page(student_id):
+    if 'user' not in session:
+        flash("You need to log in to view this page.")
+        return redirect(url_for('login'))
+
     pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{student_id}.pdf")  # Ensure correct folder
 
     if not os.path.exists(pdf_path):
@@ -202,6 +202,9 @@ def result_page(student_id):
 
 @app.route('/view_courses/<student_id>')
 def view_courses(student_id):
+    if 'user' not in session:
+        flash("You need to log in to view this page.")
+        return redirect(url_for('login'))
     connection = get_db_connection()
     program = request.args.get("program")  # <-- gets ?program=PhD from the URL)
     try:
@@ -238,8 +241,7 @@ def view_courses(student_id):
 
 @app.route('/teacher_dashboard')
 def teacher_dashboard():
-    user = session.get('user')
-    if not user:
+    if 'user' not in session:
         flash("You need to log in to view this page.")
         return redirect(url_for('login'))
 
@@ -259,6 +261,9 @@ def teacher_dashboard():
 
 @app.route('/redirect_program', methods=['POST'])
 def redirect_program():
+    if 'user' not in session:
+        flash("You need to log in to view this page.")
+        return redirect(url_for('login'))
     program = request.form.get('program')
     print(program)
     student_id = request.form.get('student_id')  # Get student ID from form input
@@ -294,6 +299,8 @@ def add_prereq():
 
 @app.route('/remove_student/<student_id>', methods=['POST'])
 def remove_student(student_id):
+    print(f"🔍 Received request to remove student: {student_id}")
+
     connection = get_db_connection()
     if not connection:
         flash("Database connection failed.", "error")
@@ -322,6 +329,9 @@ def remove_student(student_id):
 
 @app.route('/compare_courses', methods=['GET','POST'])
 def compare_courses():
+    if 'user' not in session:
+        flash("You need to log in to view this page.")
+        return redirect(url_for('login'))
     student_id = request.args.get("student_id")
     program = request.args.get("program")  # Get desired program
     taken_courses = get_student_courses(student_id)
@@ -378,42 +388,28 @@ def save_courses():
     data = request.get_json()
     student_id = data['student_id']
     courses = data['courses']
+
     connection = get_db_connection()
     cursor = connection.cursor()
 
-    # AVOUD DUPLICATES
-    unique_course_updates = {}
-    for course in courses:
-        course_id = course['id']  
-        if course_id not in unique_course_updates:
-            unique_course_updates[course_id] = {
-                'course_code': course['course_code'],
-                'description': course['description']
-            }
-
     try:
-        for course_id, info in unique_course_updates.items():
-            cursor.execute("""
-                UPDATE courses
-                SET course_code = %s, description = %s
-                WHERE id = %s
-            """, (info['course_code'], info['description'], course_id))
-
         for course in courses:
-            transcript_id = course['id']  # This should refer to the transcript row ID
-            cursor.execute("""
-                UPDATE transcripts
-                SET grade = %s, units = %s
-                WHERE id = %s AND student_id = %s
-            """, (course['grade'], course['units'], transcript_id, student_id))
-
+            update_query = """
+                UPDATE transcripts t
+                JOIN courses c ON t.course_id = c.id
+                SET c.course_code = %s, c.description = %s, t.grade = %s, t.units = %s
+                WHERE t.student_id = %s AND t.id = %s
+            """
+            cursor.execute(update_query, (
+                course['course_code'], course['description'],
+                course['grade'], course['units'],
+                student_id, course['id']
+            ))
         connection.commit()
         return jsonify({'message': 'Courses updated successfully!'}), 200
-
     except Exception as e:
         print("Error updating:", e)
         return jsonify({'message': 'Failed to update courses.'}), 500
-
     finally:
         cursor.close()
         connection.close()

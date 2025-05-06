@@ -56,7 +56,7 @@
             box-shadow: 0px 12px 24px rgba(0, 0, 0, 0.3);
             border-radius: 8px;
             overflow-x: auto;
-            margin: 20px auto; /* Center and add spacing */
+            margin: 10px auto; /* Center and add spacing */
         }
 
         /* Table styling */
@@ -118,7 +118,7 @@
             margin-top: 20px;
             width: 90%;
             max-width: 600px;
-            margin: 20px auto;
+            margin: 10px auto;
         }
 
         .upload-container h2 {
@@ -262,7 +262,6 @@
             width: 100%;
             display: flex;
             justify-content: center;
-            margin: 20px 0;
         }
 
         .bottom-bar a:hover {
@@ -278,13 +277,12 @@
         <img src="{{ url_for('static', filename='dcs_logo.png') }}" alt="Department of Computer Science Logo">
         <h1>University of the Philippines Diliman<br>Department of Computer Science</h1>
     </div>
-
+    <!-- ✅ Export Form wraps only header + footer controls -->
     <form id="export-form" action="/export_files" method="POST">
         <div class="top-bar">
             <button type="button" onclick="toggleExportMode()" class="export-btn">Export</button>
         </div>
-    
-        <!-- Table Container -->
+
         <div class="table-container">
             <table>
                 <thead>
@@ -328,11 +326,7 @@
                                 </a>
                             </td>
                             <td>
-                                <!-- Remove student button is its own separate form -->
-                                <form action="{{ url_for('remove_student', student_id=student.idStudent) }}" method="POST" 
-                                      onsubmit="return confirm('Are you sure you want to remove this student?');">
-                                    <button type="submit" class="delete-btn">Remove</button>
-                                </form>
+                                <button type="button" class="delete-btn" onclick="submitRemove('{{ student['idStudent'] }}')">Remove</button>
                             </td>
                         </tr>
                         {% endfor %}
@@ -344,20 +338,18 @@
                 </tbody>
             </table>
         </div>
-    
-        <!-- Export buttons and format selection -->
-        <div id="export-controls" class="hidden" style="margin-top: 10px;">
+
+        <!-- Export footer controls -->
+        <div id="export-controls" class="hidden" style="margin-left: 45px;">
             <label for="export-format">Export Format:</label>
-            <select name="export_format" id="export_format" required>
+            <select name="export_format" id="export_format">
                 <option value="" disabled selected>Select format</option>
-                <option value="csv">CSV </option>
+                <option value="csv">CSV</option>
                 <option value="xlsx">Excel (.xlsx)</option>
-            </select>            
+            </select>
             <button type="submit">Export Selected</button>
         </div>
     </form>
-    
-
 
     <!-- File Upload Section -->
 <div class="upload-container">
@@ -387,6 +379,18 @@
         </div>
     </form>
 </div>
+
+<script>
+    function submitRemove(studentId) {
+        if (!confirm('Are you sure you want to remove this student?')) return;
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/remove_student/${studentId}`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+</script>
 
 <script>
     function updateFileLabel() {
