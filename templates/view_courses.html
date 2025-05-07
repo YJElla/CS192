@@ -243,6 +243,11 @@
         <button id="edit-toggle" class="edit-btn">Edit</button>
         <button id="save-changes" class="edit-btn"style="display:none;">Save</button>
         <button id="add-row" class="edit-btn" style="display:none">Add Row</button>
+<<<<<<< HEAD
+        <button id="save-add" class="edit-btn" style="display:none;">Save New Rows</button>
+
+=======
+>>>>>>> 0e6968bd1a6e33c902d218af5f01130da255452f
     </div>
     <!-- Updated portion of view_courses.html -->
 <div class="table-container">
@@ -279,6 +284,8 @@
 <script>
     const editToggle = document.getElementById('edit-toggle');
     const saveButton = document.getElementById('save-changes');
+    const saveAddBtn = document.getElementById('save-add');
+    const addRowBtn = document.getElementById('add-row');
     const table = document.getElementById('courses-table');
     let isEditing = false;
 
@@ -287,6 +294,7 @@
         editToggle.textContent = isEditing ? 'Cancel' : 'Edit';
         saveButton.style.display = isEditing ? 'inline-block' : 'none';
         addRowBtn.style.display = isEditing ? 'inline-block' : 'none';
+        saveAddBtn.style.display = isEditing ? 'inline-block' : 'none';
 
         table.querySelectorAll('tbody td.editable').forEach(cell => {
             cell.contentEditable = isEditing;
@@ -299,23 +307,23 @@
     });
 
     document.addEventListener('click', function(event) {
-    if (event.target.classList.contains('remove-row')) {
-        const row = event.target.closest('tr');
-        const transcriptId = row.dataset.id;
+        if (event.target.classList.contains('remove-row')) {
+            const row = event.target.closest('tr');
+            const transcriptId = row.dataset.id;
 
-        fetch(`/delete_course/${transcriptId}`, {
-            method: 'DELETE'
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                row.remove();
-            } else {
-                alert('Failed to delete course');
-            }
-        })
-        .catch(() => alert('Error deleting course.'));
-    }
+            fetch(`/delete_course/${transcriptId}`, {
+                method: 'DELETE'
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    row.remove();
+                } else {
+                    alert('Failed to delete course');
+                }
+            })
+            .catch(() => alert('Error deleting course.'));
+        }
     });
 
     saveButton.addEventListener('click', () => {
@@ -333,11 +341,6 @@
             });
         });
 
-        console.log({
-            student_id: "{{ student_id }}",
-            matched_courses: editedRows
-        });
-
         fetch('/save_courses', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -346,10 +349,11 @@
         .then(res => res.json())
         .then(data => {
             alert(data.message || 'Saved.');
-            // Revert to non-edit mode
             isEditing = false;
             editToggle.textContent = 'Edit';
             saveButton.style.display = 'none';
+            addRowBtn.style.display = 'none';
+            saveAddBtn.style.display = 'none';
 
             table.querySelectorAll('tbody td.editable').forEach(cell => {
                 cell.contentEditable = false;
@@ -363,7 +367,6 @@
         .catch(() => alert('Error saving changes.'));
     });
     
-    const addRowBtn = document.getElementById('add-row');
     addRowBtn.addEventListener('click', () => {
         const tbody = table.querySelector('tbody');
         const rows = tbody.querySelectorAll('tr');
@@ -395,9 +398,75 @@
     });
 
 
+    addRowBtn.addEventListener('click', () => {
+        const tbody = table.querySelector('tbody');
+        const rows = tbody.querySelectorAll('tr');
+        // Get the highest existing data-id
+        let maxId = 0;
+        rows.forEach(row => {
+            const rowId = parseInt(row.getAttribute('data-id'));
+            if (rowId > maxId) {
+                maxId = rowId;
+            }
+        });
+
+        const newId = maxId + 1;  // Increment the highest ID
+
+        const newRow = document.createElement('tr');
+        newRow.setAttribute('data-id', newId);
+
+        newRow.innerHTML = `
+            <td>${newId}</td>
+            <td class="editable" contenteditable="true"></td>
+            <td class="editable" contenteditable="true"></td>
+            <td class="editable" contenteditable="true"></td>
+            <td class="editable" contenteditable="true"></td>
+            <td class="edit-col" style="display: table-cell;"><button class="remove-row">Remove</button></td>
+        `;
+
+        tbody.appendChild(newRow);
+    });
+    
+    saveAddBtn.addEventListener('click', () => {
+        const newCourses = [];
+        const rows = table.querySelectorAll('tbody tr');
+
+        rows.forEach(row => {
+            const isNew = !row.dataset.id || row.dataset.id === newId;
+            const cells = row.querySelectorAll('td');
+
+            if (isNew && cells[1].textContent.trim()) {
+                newCourses.push({
+                    course_code: cells[1].textContent.trim(),
+                    description: cells[2].textContent.trim(),
+                    grade: cells[3].textContent.trim(),
+                    units: cells[4].textContent.trim()
+                });
+            }
+        });
+
+        if (newCourses.length === 0) {
+            alert("No new rows to save.");
+            return;
+        }
+
+        fetch('/add_courses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                student_id: "{{ student_id }}",
+                new_courses: newCourses
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.message || 'New courses added.');
+            window.location.reload(); // Refresh to get updated rows with IDs
+        })
+        .catch(() => alert('Error saving new rows.'));
+    });
     
 </script>
-
 
     <a href="{{ url_for('teacher_dashboard') }}" class = "updateinfo-button">Back to Dashboard</a>
     <!-- Program Selection Dropdown -->
