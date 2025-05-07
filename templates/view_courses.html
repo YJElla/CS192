@@ -212,6 +212,37 @@
         .back-button i {
             margin-right: 6px;
         }
+
+        .modal {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: flex; justify-content: center; align-items: center;
+        z-index: 1000;
+        }
+
+        .modal-content {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        min-width: 300px;
+        max-width: 400px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .close-button {
+        float: right;
+        font-size: 20px;
+        cursor: pointer;
+        }
+        .course-input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 8px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        }
     </style>
 </head>
 <body>
@@ -245,6 +276,22 @@
         <button id="save-changes" class="edit-btn"style="display:none;">Save</button>
 
     </div>
+
+    <!-- Modal -->
+<div id="addCourseModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close-button">&times;</span>
+      <h2>Add New Course</h2>
+      <form id="addCourseForm">
+        <label>Course Code: <input type="text" class="course-input" name="course_code" required></label><br>
+        <label>Description: <input type="text" class="course-input" name="description" required></label><br>
+        <label>Grade: <input type="text" class="course-input" name="grade" required></label><br>
+        <label>Units: <input type="number" class="course-input" name="units" required></label><br><br>
+        <button type="submit">Add Course</button>
+      </form>
+    </div>
+  </div>
+  
     <!-- Updated portion of view_courses.html -->
 <div class="table-container">
     {% if courses %}
@@ -360,42 +407,45 @@
         .catch(() => alert('Error saving changes.'));
     });
     
-    document.getElementById('add-row').addEventListener('click', () => {
-    const courseCode = prompt("Enter Course Code:");
-    const description = prompt("Enter Description:");
-    const grade = prompt("Enter Grade:");
-    const units = prompt("Enter Units:");
-
-    if (!courseCode || !description || !grade || !units) {
-        alert("All fields are required.");
-        return;
-    }
-
-    const newCourse = {
-        "Course Code": courseCode.trim(),
-        "Description": description.trim(),
-        "Grade": grade.trim(),
-        "Units": units.trim()
-    };
-
-    fetch('/add_courses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            student_id: "{{ student_id }}",  // from Flask context
-            courses: [newCourse]
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        alert(data.message || "Course added!");
-        location.reload();  // Reload to reflect the new row
-    })
-    .catch(() => alert("Error adding course."));
-});
     
 </script>
-
+<script>
+    document.getElementById('add-row').addEventListener('click', () => {
+        document.getElementById('addCourseModal').style.display = 'flex';
+    });
+    
+    document.querySelector('.close-button').addEventListener('click', () => {
+        document.getElementById('addCourseModal').style.display = 'none';
+    });
+    
+    document.getElementById('addCourseForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const courseData = {
+            "Course Code": formData.get('course_code'),
+            "Description": formData.get('description'),
+            "Grade": formData.get('grade'),
+            "Units": formData.get('units')
+        };
+    
+        fetch('/add_courses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                student_id: "{{ student_id }}",
+                courses: [courseData]
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.message || "Course added!");
+            location.reload();
+        })
+        .catch(() => alert("Error adding course."));
+    });
+    </script>
+    
     <a href="{{ url_for('teacher_dashboard') }}" class = "updateinfo-button">Back to Dashboard</a>
     <!-- Program Selection Dropdown -->
 
