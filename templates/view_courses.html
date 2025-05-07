@@ -53,7 +53,18 @@
             overflow-x: auto;      /* Enables horizontal scroll */
 
         }
+        .delete-btn {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
 
+        .delete-btn:hover {
+            background-color: darkred;
+        }
         /* Table styling */
         table {
             width: 100%;
@@ -231,7 +242,7 @@
                     <td class="editable">{{ course.description }}</td>
                     <td class="editable">{{ course.grade }}</td>
                     <td class="editable">{{ course.units }}</td>
-                    <td class="edit-col" style="display:none;"><button class="remove-row">Remove</button></td>
+                    <td class="edit-col" style="display:none;"><button class="remove-row delete-btn">Remove</button></td>
                 </tr>
                 {% endfor %}
             </tbody>

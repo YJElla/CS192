@@ -41,6 +41,32 @@
             line-height: 1.4;
         }
 
+        .delete-btn {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .delete-btn:hover {
+            background-color: darkred;
+        }
+        button {
+            background-color: #007B5E;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #005f46;
+        }
         .table-container {
             width: 90%;
             max-width: 1000px;
@@ -179,6 +205,7 @@
     <div class="top-bar">
         <button id="edit-toggle" class="edit-btn">Edit</button>
         <button id="save-changes" class="edit-btn"style="display:none;">Save</button>
+        <button id="add-row" class="edit-btn" style="display:none">Add Course</button>
     </div>
     
         
@@ -197,6 +224,7 @@
                         <span class="editable-field taken-grade" contenteditable="false">{{ match.grade }}</span>
                         (Similarity: {{ match.similarity_score * 100 | round(2) }}%)
                     </span>
+
                     <span class="grade-box 
                         {% if match.grade == 'N/A' %} purple
                         {% elif match.grade in ['A+', 'A', 'A-', 'B+'] %} green
@@ -208,6 +236,8 @@
                         {% else %} red {% endif %}">
                         {{ match.grade }}
                     </span>
+                    <button class="remove-row edit-only delete-btn" style="display:none" >Remove</button>
+
                 </li>
                 {% endfor %}
                 
@@ -232,12 +262,17 @@
         isEditing = !isEditing;
         editToggle.textContent = isEditing ? 'Cancel' : 'Edit';
         saveButton.style.display = isEditing ? 'inline-block' : 'none';
-    
+
         document.querySelectorAll('.editable-field').forEach(el => {
             el.contentEditable = isEditing;
         });
+
+        // Show or hide the "Remove" buttons
+        document.querySelectorAll('.remove-row.edit-only').forEach(btn => {
+            btn.style.display = isEditing ? 'inline-block' : 'none';
+        });
     });
-    
+
     saveButton.addEventListener('click', () => {
         const editedMatches = [];
     
@@ -273,9 +308,33 @@
             document.querySelectorAll('.editable-field').forEach(el => {
                 el.contentEditable = false;
             });
+            document.querySelectorAll('.remove-row.edit-only').forEach(btn => {
+                btn.style.display = 'none';
+            });
         })
         .catch(() => alert('Failed to save changes.'));
     });
+
+// Delete course handler
+document.addEventListener('click', function(event) {
+    if (event.target.classList.contains('remove-row')) {
+        const item = event.target.closest('.grade-item');
+        const courseId = item.dataset.id;
+
+        fetch(`/delete_course/${courseId}`, {
+            method: 'DELETE'
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                item.remove();
+            } else {
+                alert('Failed to delete course');
+            }
+        })
+        .catch(() => alert('Error deleting course.'));
+    }
+});
 </script>
         
 </body>
