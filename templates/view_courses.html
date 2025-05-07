@@ -240,14 +240,10 @@
     </a>
 
     <div class="top-bar">
+        <button id="add-row" class="edit-btn" style="display:none">Add Course</button>
         <button id="edit-toggle" class="edit-btn">Edit</button>
         <button id="save-changes" class="edit-btn"style="display:none;">Save</button>
-        <button id="add-row" class="edit-btn" style="display:none">Add Row</button>
-<<<<<<< HEAD
-        <button id="save-add" class="edit-btn" style="display:none;">Save New Rows</button>
 
-=======
->>>>>>> 0e6968bd1a6e33c902d218af5f01130da255452f
     </div>
     <!-- Updated portion of view_courses.html -->
 <div class="table-container">
@@ -284,7 +280,6 @@
 <script>
     const editToggle = document.getElementById('edit-toggle');
     const saveButton = document.getElementById('save-changes');
-    const saveAddBtn = document.getElementById('save-add');
     const addRowBtn = document.getElementById('add-row');
     const table = document.getElementById('courses-table');
     let isEditing = false;
@@ -294,7 +289,6 @@
         editToggle.textContent = isEditing ? 'Cancel' : 'Edit';
         saveButton.style.display = isEditing ? 'inline-block' : 'none';
         addRowBtn.style.display = isEditing ? 'inline-block' : 'none';
-        saveAddBtn.style.display = isEditing ? 'inline-block' : 'none';
 
         table.querySelectorAll('tbody td.editable').forEach(cell => {
             cell.contentEditable = isEditing;
@@ -353,7 +347,6 @@
             editToggle.textContent = 'Edit';
             saveButton.style.display = 'none';
             addRowBtn.style.display = 'none';
-            saveAddBtn.style.display = 'none';
 
             table.querySelectorAll('tbody td.editable').forEach(cell => {
                 cell.contentEditable = false;
@@ -367,104 +360,39 @@
         .catch(() => alert('Error saving changes.'));
     });
     
-    addRowBtn.addEventListener('click', () => {
-        const tbody = table.querySelector('tbody');
-        const rows = tbody.querySelectorAll('tr');
-        
-        // Get the highest existing data-id
-        let maxId = 0;
-        rows.forEach(row => {
-            const rowId = parseInt(row.getAttribute('data-id'));
-            if (rowId > maxId) {
-                maxId = rowId;
-            }
-        });
+    document.getElementById('add-row').addEventListener('click', () => {
+    const courseCode = prompt("Enter Course Code:");
+    const description = prompt("Enter Description:");
+    const grade = prompt("Enter Grade:");
+    const units = prompt("Enter Units:");
 
-        const newId = maxId + 1;  // Increment the highest ID
+    if (!courseCode || !description || !grade || !units) {
+        alert("All fields are required.");
+        return;
+    }
 
-        const newRow = document.createElement('tr');
-        newRow.setAttribute('data-id', newId);
+    const newCourse = {
+        "Course Code": courseCode.trim(),
+        "Description": description.trim(),
+        "Grade": grade.trim(),
+        "Units": units.trim()
+    };
 
-        newRow.innerHTML = `
-            <td>${newId}</td>
-            <td class="editable" contenteditable="true"></td>
-            <td class="editable" contenteditable="true"></td>
-            <td class="editable" contenteditable="true"></td>
-            <td class="editable" contenteditable="true"></td>
-            <td class="edit-col" style="display: table-cell;"><button class="remove-row">Remove</button></td>
-        `;
-
-        tbody.appendChild(newRow);
-    });
-
-
-    addRowBtn.addEventListener('click', () => {
-        const tbody = table.querySelector('tbody');
-        const rows = tbody.querySelectorAll('tr');
-        // Get the highest existing data-id
-        let maxId = 0;
-        rows.forEach(row => {
-            const rowId = parseInt(row.getAttribute('data-id'));
-            if (rowId > maxId) {
-                maxId = rowId;
-            }
-        });
-
-        const newId = maxId + 1;  // Increment the highest ID
-
-        const newRow = document.createElement('tr');
-        newRow.setAttribute('data-id', newId);
-
-        newRow.innerHTML = `
-            <td>${newId}</td>
-            <td class="editable" contenteditable="true"></td>
-            <td class="editable" contenteditable="true"></td>
-            <td class="editable" contenteditable="true"></td>
-            <td class="editable" contenteditable="true"></td>
-            <td class="edit-col" style="display: table-cell;"><button class="remove-row">Remove</button></td>
-        `;
-
-        tbody.appendChild(newRow);
-    });
-    
-    saveAddBtn.addEventListener('click', () => {
-        const newCourses = [];
-        const rows = table.querySelectorAll('tbody tr');
-
-        rows.forEach(row => {
-            const isNew = !row.dataset.id || row.dataset.id === newId;
-            const cells = row.querySelectorAll('td');
-
-            if (isNew && cells[1].textContent.trim()) {
-                newCourses.push({
-                    course_code: cells[1].textContent.trim(),
-                    description: cells[2].textContent.trim(),
-                    grade: cells[3].textContent.trim(),
-                    units: cells[4].textContent.trim()
-                });
-            }
-        });
-
-        if (newCourses.length === 0) {
-            alert("No new rows to save.");
-            return;
-        }
-
-        fetch('/add_courses', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                student_id: "{{ student_id }}",
-                new_courses: newCourses
-            })
+    fetch('/add_courses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            student_id: "{{ student_id }}",  // from Flask context
+            courses: [newCourse]
         })
-        .then(res => res.json())
-        .then(data => {
-            alert(data.message || 'New courses added.');
-            window.location.reload(); // Refresh to get updated rows with IDs
-        })
-        .catch(() => alert('Error saving new rows.'));
-    });
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message || "Course added!");
+        location.reload();  // Reload to reflect the new row
+    })
+    .catch(() => alert("Error adding course."));
+});
     
 </script>
 

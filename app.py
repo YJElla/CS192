@@ -445,23 +445,42 @@ def save_courses():
         cursor.close()
         connection.close()
 
+        
 @app.route('/add_courses', methods=['POST'])
 def add_courses():
     data = request.get_json()
     student_id = data['student_id']
     courses = data['courses']
+    semester = "Unknown"
+    academic_year = "Unknown"
 
     connection = get_db_connection()
     cursor = connection.cursor()
 
     try:
         for course in courses:
-            # Insert new courses into the transcripts table
-            transcript_query = """
-                    INSERT INTO transcripts (student_id, semester, academic_year, course_id, grade, units)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                """
-            cursor.execute(transcript_query, (student_id, semester, academic_year, course_id, grade, units))
+            course_code = course.get("Course Code", "N/A")
+            description = course.get("Description", "N/A")
+            grade = course.get("Grade", "N/A")
+            units = course.get("Units", "0")
+
+            # Insert or update the course
+            cursor.execute("""
+                INSERT INTO courses (course_code, description)
+                VALUES (%s, %s)
+                ON DUPLICATE KEY UPDATE description = VALUES(description)
+            """, (course_code, description))
+
+            # Get the correct course_id (even if it already existed)
+            cursor.execute("SELECT id FROM courses WHERE course_code = %s", (course_code,))
+            course_id = cursor.fetchone()[0]
+
+            # Insert into transcripts
+            cursor.execute("""
+                INSERT INTO transcripts (student_id, semester, academic_year, course_id, grade, units)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (student_id, semester, academic_year, course_id, grade, units))
+
         connection.commit()
         return jsonify({'message': 'Courses added successfully!'}), 200
     except Exception as e:
@@ -471,17 +490,6 @@ def add_courses():
         cursor.close()
         connection.close()
         
-@app.route('/latest_course_id', methods=['GET'])
-def latest_course_id():
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute("SELECT MAX(id) FROM courses")  # Or use transcripts if needed
-    result = cursor.fetchone()
-    latest_id = result[0] if result[0] is not None else 0
-    cursor.close()
-    connection.close()
-    return jsonify({'latest_id': latest_id})
-
 
 @app.route('/delete_course/<int:transcript_id>', methods=['DELETE'])
 def delete_course(transcript_id):
