@@ -173,6 +173,28 @@
             border: 1px dashed #888;
         }
 
+        .back1-button {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        background-color: transparent;
+        border: none;
+        font-size: 18px;
+        color: #004d40;
+        text-decoration: none;
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        }
+
+        .back1-button:hover {
+            color: #00695c;
+        }
+
+        .back1-button i {
+            margin-right: 6px;
+        }
     </style>
 </head>
 <body>
@@ -201,6 +223,9 @@
         </div>
     </div>
     
+    <a href="{{ url_for('view_courses', student_id=student_id) }}" class="back1-button">
+        <i>&larr;</i>Courses 
+    </a>
     
     <div class="top-bar">
         <button id="edit-toggle" class="edit-btn">Edit</button>

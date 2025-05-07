@@ -190,6 +190,28 @@
             justify-content: flex-end;
             margin-bottom: 10px;
         }
+        .back-button {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        background-color: transparent;
+        border: none;
+        font-size: 18px;
+        color: #004d40;
+        text-decoration: none;
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        }
+
+        .back-button:hover {
+            color: #00695c;
+        }
+
+        .back-button i {
+            margin-right: 6px;
+        }
     </style>
 </head>
 <body>
@@ -213,7 +235,9 @@
             <button type="submit">Go</button>
         </form>
     </div>
-
+    <a href="{{ url_for('teacher_dashboard') }}" class="back-button">
+        <i>&larr;</i> Dashboard
+    </a>
 
     <div class="top-bar">
         <button id="edit-toggle" class="edit-btn">Edit</button>
