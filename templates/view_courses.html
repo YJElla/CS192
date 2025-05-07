@@ -199,7 +199,7 @@
         
             <p><strong>Selected Program:</strong> {{ program }}</p>
 
-            <button type="submit">Matched Courses</button>
+            <button type="submit">Go</button>
         </form>
     </div>
 
@@ -207,6 +207,7 @@
     <div class="top-bar">
         <button id="edit-toggle" class="edit-btn">Edit</button>
         <button id="save-changes" class="edit-btn"style="display:none;">Save</button>
+        <button id="add-row" class="edit-btn" style="display:none">Add Row</button>
     </div>
     <!-- Updated portion of view_courses.html -->
 <div class="table-container">
@@ -250,6 +251,7 @@
         isEditing = !isEditing;
         editToggle.textContent = isEditing ? 'Cancel' : 'Edit';
         saveButton.style.display = isEditing ? 'inline-block' : 'none';
+        addRowBtn.style.display = isEditing ? 'inline-block' : 'none';
 
         table.querySelectorAll('tbody td.editable').forEach(cell => {
             cell.contentEditable = isEditing;
@@ -325,6 +327,38 @@
         })
         .catch(() => alert('Error saving changes.'));
     });
+    
+    const addRowBtn = document.getElementById('add-row');
+    addRowBtn.addEventListener('click', () => {
+        const tbody = table.querySelector('tbody');
+        const rows = tbody.querySelectorAll('tr');
+        
+        // Get the highest existing data-id
+        let maxId = 0;
+        rows.forEach(row => {
+            const rowId = parseInt(row.getAttribute('data-id'));
+            if (rowId > maxId) {
+                maxId = rowId;
+            }
+        });
+
+        const newId = maxId + 1;  // Increment the highest ID
+
+        const newRow = document.createElement('tr');
+        newRow.setAttribute('data-id', newId);
+
+        newRow.innerHTML = `
+            <td>${newId}</td>
+            <td class="editable" contenteditable="true"></td>
+            <td class="editable" contenteditable="true"></td>
+            <td class="editable" contenteditable="true"></td>
+            <td class="editable" contenteditable="true"></td>
+            <td class="edit-col" style="display: table-cell;"><button class="remove-row">Remove</button></td>
+        `;
+
+        tbody.appendChild(newRow);
+    });
+
 
     
 </script>
