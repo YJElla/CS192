@@ -292,6 +292,7 @@ def teacher_dashboard():
 
     return render_template('teacherdashboard.html', students=students or [])
 
+
 @app.route('/redirect_program', methods=['POST'])
 def redirect_program():
     if 'user' not in session:
@@ -443,6 +444,44 @@ def save_courses():
     finally:
         cursor.close()
         connection.close()
+
+@app.route('/add_courses', methods=['POST'])
+def add_courses():
+    data = request.get_json()
+    student_id = data['student_id']
+    courses = data['courses']
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    try:
+        for course in courses:
+            # Insert new courses into the transcripts table
+            transcript_query = """
+                    INSERT INTO transcripts (student_id, semester, academic_year, course_id, grade, units)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """
+            cursor.execute(transcript_query, (student_id, semester, academic_year, course_id, grade, units))
+        connection.commit()
+        return jsonify({'message': 'Courses added successfully!'}), 200
+    except Exception as e:
+        print("Error adding courses:", e)
+        return jsonify({'message': 'Failed to add courses.'}), 500
+    finally:
+        cursor.close()
+        connection.close()
+        
+@app.route('/latest_course_id', methods=['GET'])
+def latest_course_id():
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute("SELECT MAX(id) FROM courses")  # Or use transcripts if needed
+    result = cursor.fetchone()
+    latest_id = result[0] if result[0] is not None else 0
+    cursor.close()
+    connection.close()
+    return jsonify({'latest_id': latest_id})
+
 
 @app.route('/delete_course/<int:transcript_id>', methods=['DELETE'])
 def delete_course(transcript_id):
