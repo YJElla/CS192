@@ -1,4 +1,7 @@
 Flask
-mysql-connector-python
 pytesseract
-Pillow
+pillow
+pdf2image
+scikit-learn
+openpyxl
+mysql-connector-python
