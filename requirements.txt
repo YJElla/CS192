@@ -1,7 +1,9 @@
 Flask
+Werkzeug
 pytesseract
-pillow
-pdf2image
-scikit-learn
-openpyxl
+Pillow
 mysql-connector-python
+openpyxl
+scikit-learn
+numpy
+pdf2image
