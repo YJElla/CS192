@@ -9,7 +9,7 @@ from ocr_pdf import extract_text_from_pdf  # Import the PDF processing function
 import mysql.connector
 import json
 from nlp import compute_similarity
-from db import get_student_courses, get_prereqs_for_program 
+from db import get_student_courses, get_prereqs_for_program, get_db_connection
 from export import generate_csv_for_student, generate_xlsx_for_student
 
 app = Flask(__name__)
@@ -18,18 +18,6 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Limit file size to 16 MB
 
 app.secret_key = "my_secret_key" 
 
-def get_db_connection():
-    try:
-        connection = mysql.connector.connect(
-            host="localhost",  # Replace with  DB host
-            user="root",  # Replace with MySQL username
-            password="password",  # Replace with your MySQL password
-            database="cs191"
-        )
-        return connection
-    except mysql.connector.Error as err:
-        print(f"Database connection error: {err}")
-        return None
 
 # Ensure upload folder exists
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
