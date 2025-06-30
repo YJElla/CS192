@@ -50,6 +50,24 @@
             border-radius: 5px;
         }
 
+        .modal {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: flex; justify-content: center; align-items: center;
+        z-index: 1000;
+        }
+
+        .modal-content {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        min-width: 300px;
+        max-width: 400px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
         .delete-btn:hover {
             background-color: darkred;
         }
@@ -172,7 +190,18 @@
             background-color: #eef;
             border: 1px dashed #888;
         }
-
+        .close-button {
+            float: right;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .course-input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
         .back1-button {
         position: absolute;
         top: 15px;
@@ -223,14 +252,28 @@
         </div>
     </div>
     
+    <div id="addCourseModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close-button">&times;</span>
+      <h2>Add New Course</h2>
+      <form id="addCourseForm">
+        <label>Course Code: <input type="text" class="course-input" name="course_code" required></label><br>
+        <label>Description: <input type="text" class="course-input" name="description" required></label><br>
+        <label>Grade: <input type="text" class="course-input" name="grade" required></label><br>
+        <label>Units: <input type="number" class="course-input" name="units" required></label><br><br>
+        <button type="submit">Add Course</button>
+      </form>
+    </div>
+  </div>
+
     <a href="{{ url_for('view_courses', student_id=student_id) }}" class="back1-button">
         <i>&larr;</i>Courses 
     </a>
     
     <div class="top-bar">
+        <button id="add-row" class="edit-btn" style="display:none">Add Course</button>
         <button id="edit-toggle" class="edit-btn">Edit</button>
         <button id="save-changes" class="edit-btn"style="display:none;">Save</button>
-        <button id="add-row" class="edit-btn" style="display:none">Add Course</button>
     </div>
     
         
@@ -281,12 +324,14 @@
 <script>
     const editToggle = document.getElementById('edit-toggle');
     const saveButton = document.getElementById('save-changes');
+    const addRowBtn = document.getElementById('add-row');
     let isEditing = false;
     
     editToggle.addEventListener('click', () => {
         isEditing = !isEditing;
         editToggle.textContent = isEditing ? 'Cancel' : 'Edit';
         saveButton.style.display = isEditing ? 'inline-block' : 'none';
+        addRowBtn.style.display = isEditing ? 'inline-block' : 'none';
 
         document.querySelectorAll('.editable-field').forEach(el => {
             el.contentEditable = isEditing;
@@ -329,7 +374,8 @@
             isEditing = false;
             editToggle.textContent = 'Edit';
             saveButton.style.display = 'none';
-    
+            addRowBtn.style.display = 'none';
+
             document.querySelectorAll('.editable-field').forEach(el => {
                 el.contentEditable = false;
             });
@@ -361,6 +407,43 @@ document.addEventListener('click', function(event) {
     }
 });
 </script>
+
+<script>
+    addRowBtn.addEventListener('click', () => {
+        document.getElementById('addCourseModal').style.display = 'flex';
+    });
+    
+    document.querySelector('.close-button').addEventListener('click', () => {
+        document.getElementById('addCourseModal').style.display = 'none';
+    });
+    
+    document.getElementById('addCourseForm').addEventListener('submit', function(e) {
+        e.preventDefault();
         
+        const formData = new FormData(this);
+        const courseData = {
+            "Course Code": formData.get('course_code'),
+            "Description": formData.get('description'),
+            "Grade": formData.get('grade'),
+            "Units": formData.get('units')
+        };
+    
+        fetch('/add_courses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                student_id: "{{ student_id }}",
+                courses: [courseData]
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.message || "Course added!");
+            location.reload();
+        })
+        .catch(() => alert("Error adding course."));
+    });
+</script>
+
 </body>
 </html>
