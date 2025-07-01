@@ -56,8 +56,8 @@ CREATE TABLE prereqs (
 );
 
 INSERT INTO prereqs (program, core_course_code, prereq_course_code, description) VALUES
-('MS', 'CS204', 'CS133', 'Alphabet, words, languages and algorithmic problems, finite automata and hierarchy of languages, Turing machines, tractable and intractable problems, uncomputable functions, the halting problem'),
-('PhD', 'CS204', 'CS133', 'Alphabet, words, languages and algorithmic problems, finite automata and hierarchy of languages, Turing machines, tractable and intractable problems, uncomputable functions, the halting problem'),
+('MS', 'CS204', 'CS133', 'Alphabet, words, languages and algorithmic problems, finite automata and hierarchy of languages, Turing machines, tractable and intractable problems, uncomputable functions, the halting problem, automata'),
+('PhD', 'CS204', 'CS133', 'Alphabet, words, languages and algorithmic problems, finite automata and hierarchy of languages, Turing machines, tractable and intractable problems, uncomputable functions, the halting problem, automata'),
 ('Bioinformatics', 'Calculus and Matrix Algebra', 'Calculus Matrix Algebra Background', 'Elementary Analysis, Elementary Analysis I, Elementary Analysis II, Elementary Analysis III, Functions and their graphs, concepts of limit and continuity, theory of differentiation, derivatives of algebraic and trigonometric functions, theory of integrals, applications of the definite integral, Integration methods, determinants, plane and solid analytics, hyperbolic functions, polar coordinates, vectors, parametrics equations, Partial differentiation, multiple integrals, infinite series, differential equations'),
 
 ('MS', 'CS210', 'CS135', 'Algorithm analysis: asymptotic analysis, time and space tradeoffs, recurrence relations. Greedy, divide and conquer, heuristics and other algorithm design strategies. Fundamental computing algorithms for sorting, selection, trees and graphs. Intractability and approximation'),
@@ -72,8 +72,8 @@ INSERT INTO prereqs (program, core_course_code, prereq_course_code, description)
 ('PhD', 'CS250', 'CS140', 'Operating system concepts; virtualization and multiprocessing, issues and considerations in designing and implementing common features of operating systems; virtual machines and hypervisors; introduction to real-time operating systems, and operating systems for embedded systems'),
 ('Bioinformatics', 'Biochemistry', 'Chem 40', 'An elementary treatment of structure-function relationship of biomolecules and biochemical mechanisms, Elementary Biochemistry'),
 
-('MS', 'CS260', 'CS192', 'Software Implementation and Maintenance, Integration Strategies, and Security Issues'),
-('PhD', 'CS260', 'CS192', 'Software Implementation and Maintenance, Integration Strategies, and Security Issues'),
+('MS', 'CS260', 'CS192', 'Software Implementation and Maintenance, Integration Strategies, and Security Issues, Security, Maintenance'),
+('PhD', 'CS260', 'CS192', 'Software Implementation and Maintenance, Integration Strategies, and Security Issues, Security, Maintenance'),
 ('Bioinformatics', 'Molecular Biology', 'MBB 110', 'Molecular diversity, physiology and genetics of microorganisms, Fundamentals of Molecular Microbiology'),
 
 ('MS', 'CS270', 'CS165', 'Relational database concepts: Entity Relation modeling, relational model, relational algebra, relational database design and normalization, structured query language, query optimization, File management, Storage and Indexing, Transaction Management, Data warehousing. Non-relational/modern database systems'),
