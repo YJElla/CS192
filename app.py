@@ -356,7 +356,7 @@ def compare_courses():
     taken_courses = get_student_courses(student_id)
     prereqs = get_prereqs_for_program(program)
     matched_results = compute_similarity(taken_courses, prereqs)
-    return render_template("matched_courses.html", results = matched_results, student_id=student_id)
+    return render_template("matched_courses.html", results = matched_results, student_id=student_id, program=program)
     
 
 @app.route('/export_files', methods=['POST'])
