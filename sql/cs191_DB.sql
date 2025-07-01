@@ -56,8 +56,8 @@ CREATE TABLE prereqs (
 );
 
 INSERT INTO prereqs (program, core_course_code, prereq_course_code, description) VALUES
-('MS', 'CS204', 'CS133', 'Alphabet, words, languages and algorithmic problems, finite automata and hierarchy of languages, Turing machines, tractable and intractable problems, uncomputable functions, the halting problem, automata'),
-('PhD', 'CS204', 'CS133', 'Alphabet, words, languages and algorithmic problems, finite automata and hierarchy of languages, Turing machines, tractable and intractable problems, uncomputable functions, the halting problem, automata'),
+('MS', 'CS204', 'CS133', 'Alphabet, words, languages and algorithmic problems, finite automata ,hierarchy of languages, Turing machines, tractable and intractable problems, uncomputable functions, the halting problem, automata'),
+('PhD', 'CS204', 'CS133', 'Alphabet, words, languages and algorithmic problems, finite automata, hierarchy of languages, Turing machines, tractable and intractable problems, uncomputable functions, the halting problem, automata'),
 ('Bioinformatics', 'Calculus and Matrix Algebra', 'Calculus Matrix Algebra Background', 'Elementary Analysis, Elementary Analysis I, Elementary Analysis II, Elementary Analysis III, Functions and their graphs, concepts of limit and continuity, theory of differentiation, derivatives of algebraic and trigonometric functions, theory of integrals, applications of the definite integral, Integration methods, determinants, plane and solid analytics, hyperbolic functions, polar coordinates, vectors, parametrics equations, Partial differentiation, multiple integrals, infinite series, differential equations'),
 
 ('MS', 'CS210', 'CS135', 'Algorithm analysis: asymptotic analysis, time and space tradeoffs, recurrence relations. Greedy, divide and conquer, heuristics and other algorithm design strategies. Fundamental computing algorithms for sorting, selection, trees and graphs. Intractability and approximation'),
